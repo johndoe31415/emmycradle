@@ -21,8 +21,8 @@
 	Johannes Bauer <JohannesBauer@gmx.de>
 */
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#ifndef __EMMYCRADLE_H__
+#define __EMMYCRADLE_H__
 
 /*************** AUTO GENERATED SECTION FOLLOWS ***************/
 /***************  AUTO GENERATED SECTION ENDS   ***************/
