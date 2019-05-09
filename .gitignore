@@ -1,2 +1,5 @@
 *.o
 .*.swp
+emmycradle
+emmycradle.hex
+emmycradle.bin

@@ -1,7 +1,7 @@
 /* Automatically generated HAL from hal.xml */
 /* NEVER EDIT MANUALLY */
 
-/* Generated on: 2019-05-08 19:21:03 */
+/* Generated on: 2019-05-09 14:40:00 */
 
 #ifndef __HAL_H__
 #define __HAL_H__
@@ -178,6 +178,72 @@
 #define ENABLE_IsActive()                        (ENABLE_Get() == 0)
 #define ENABLE_Init()                            { ENABLE_SetInactive(); ENABLE_ModeOutput(); }
 
+/* SWITCH_UP -> PA0 (Input, Initially Pullup On, Active-Low) */
+#define SWITCH_UP_BIT                            0
+#define SWITCH_UP_PIN                            PINA
+#define SWITCH_UP_PORT                           PORTA
+#define SWITCH_UP_DDR                            DDRA
+#define SWITCH_UP_SetPullupActive()              SWITCH_UP_PORT |= _BV(SWITCH_UP_BIT)
+#define SWITCH_UP_SetPullupInactive()            SWITCH_UP_PORT &= ~_BV(SWITCH_UP_BIT)
+#define SWITCH_UP_ModeInput()                    SWITCH_UP_DDR &= ~_BV(SWITCH_UP_BIT)
+#define SWITCH_UP_IsInput()                      ((SWITCH_UP_DDR & _BV(SWITCH_UP_BIT)) == 0)
+#define SWITCH_UP_Get()                          (SWITCH_UP_PIN & _BV(SWITCH_UP_BIT))
+#define SWITCH_UP_GetBit()                       (SWITCH_UP_Get() >> SWITCH_UP_BIT)
+#define SWITCH_UP_IsInactive()                   (SWITCH_UP_Get() != 0)
+#define SWITCH_UP_IsActive()                     (SWITCH_UP_Get() == 0)
+#define SWITCH_UP_Init()                         { SWITCH_UP_SetPullupActive(); SWITCH_UP_ModeInput(); }
+
+/* SWITCH_DOWN -> PA1 (Input, Initially Pullup On, Active-Low) */
+#define SWITCH_DOWN_BIT                          1
+#define SWITCH_DOWN_PIN                          PINA
+#define SWITCH_DOWN_PORT                         PORTA
+#define SWITCH_DOWN_DDR                          DDRA
+#define SWITCH_DOWN_SetPullupActive()            SWITCH_DOWN_PORT |= _BV(SWITCH_DOWN_BIT)
+#define SWITCH_DOWN_SetPullupInactive()          SWITCH_DOWN_PORT &= ~_BV(SWITCH_DOWN_BIT)
+#define SWITCH_DOWN_ModeInput()                  SWITCH_DOWN_DDR &= ~_BV(SWITCH_DOWN_BIT)
+#define SWITCH_DOWN_IsInput()                    ((SWITCH_DOWN_DDR & _BV(SWITCH_DOWN_BIT)) == 0)
+#define SWITCH_DOWN_Get()                        (SWITCH_DOWN_PIN & _BV(SWITCH_DOWN_BIT))
+#define SWITCH_DOWN_GetBit()                     (SWITCH_DOWN_Get() >> SWITCH_DOWN_BIT)
+#define SWITCH_DOWN_IsInactive()                 (SWITCH_DOWN_Get() != 0)
+#define SWITCH_DOWN_IsActive()                   (SWITCH_DOWN_Get() == 0)
+#define SWITCH_DOWN_Init()                       { SWITCH_DOWN_SetPullupActive(); SWITCH_DOWN_ModeInput(); }
+
+/* SWITCH_MIDDLE -> PA2 (Input, Initially Pullup On, Active-Low) */
+#define SWITCH_MIDDLE_BIT                        2
+#define SWITCH_MIDDLE_PIN                        PINA
+#define SWITCH_MIDDLE_PORT                       PORTA
+#define SWITCH_MIDDLE_DDR                        DDRA
+#define SWITCH_MIDDLE_SetPullupActive()          SWITCH_MIDDLE_PORT |= _BV(SWITCH_MIDDLE_BIT)
+#define SWITCH_MIDDLE_SetPullupInactive()        SWITCH_MIDDLE_PORT &= ~_BV(SWITCH_MIDDLE_BIT)
+#define SWITCH_MIDDLE_ModeInput()                SWITCH_MIDDLE_DDR &= ~_BV(SWITCH_MIDDLE_BIT)
+#define SWITCH_MIDDLE_IsInput()                  ((SWITCH_MIDDLE_DDR & _BV(SWITCH_MIDDLE_BIT)) == 0)
+#define SWITCH_MIDDLE_Get()                      (SWITCH_MIDDLE_PIN & _BV(SWITCH_MIDDLE_BIT))
+#define SWITCH_MIDDLE_GetBit()                   (SWITCH_MIDDLE_Get() >> SWITCH_MIDDLE_BIT)
+#define SWITCH_MIDDLE_IsInactive()               (SWITCH_MIDDLE_Get() != 0)
+#define SWITCH_MIDDLE_IsActive()                 (SWITCH_MIDDLE_Get() == 0)
+#define SWITCH_MIDDLE_Init()                     { SWITCH_MIDDLE_SetPullupActive(); SWITCH_MIDDLE_ModeInput(); }
+
+/* RELAY -> PA6 (Output, Initially Inactive) */
+#define RELAY_BIT                                6
+#define RELAY_PIN                                PINA
+#define RELAY_PORT                               PORTA
+#define RELAY_DDR                                DDRA
+#define RELAY_ModeOutput()                       RELAY_DDR |= _BV(RELAY_BIT)
+#define RELAY_IsOutput()                         ((RELAY_DDR & _BV(RELAY_BIT)) != 0)
+#define RELAY_SetHIGH()                          RELAY_PORT |= _BV(RELAY_BIT)
+#define RELAY_SetLOW()                           RELAY_PORT &= ~_BV(RELAY_BIT)
+#define RELAY_Get()                              (RELAY_PIN & _BV(RELAY_BIT))
+#define RELAY_SetInactive()                      RELAY_SetLOW()
+#define RELAY_SetActive()                        RELAY_SetHIGH()
+#define RELAY_Toggle()                           RELAY_PORT ^= _BV(RELAY_BIT)
+#define RELAY_SetConditional(condition)          if (condition) RELAY_SetActive(); else RELAY_SetInactive()
+#define RELAY_SetConditionalToggle(conditionon, conditionoff, conditiontoggle) if (conditionon) { RELAY_SetActive(); } else if (conditionoff) { RELAY_SetInactive(); } else if (conditiontoggle) { RELAY_Toggle(); }
+#define RELAY_Pulse()                            { RELAY_SetActive(); RELAY_SetInactive(); }
+#define RELAY_PulseNop()                         { RELAY_SetActive(); nop(); RELAY_SetInactive(); }
+#define RELAY_IsInactive()                       (RELAY_Get() == 0)
+#define RELAY_IsActive()                         (RELAY_Get() != 0)
+#define RELAY_Init()                             { RELAY_SetInactive(); RELAY_ModeOutput(); }
+
 #define initHAL() {\
 		DIRECTION_Init();\
 		STEP_Init();\
@@ -187,6 +253,10 @@
 		MS2_Init();\
 		MS1_Init();\
 		ENABLE_Init();\
+		SWITCH_UP_Init();\
+		SWITCH_DOWN_Init();\
+		SWITCH_MIDDLE_Init();\
+		RELAY_Init();\
 }
 
 #endif

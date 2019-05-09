@@ -3,7 +3,7 @@
 DEVICE := atmega128
 DUDE_DEV := m128
 CLOCK := 16000000
-OBJS := emmycradle.o 
+OBJS := emmycradle.o debounce.o
 
 CC := avr-gcc
 CFLAGS := -std=c11 -g3 -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)

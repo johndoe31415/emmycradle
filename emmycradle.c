@@ -23,10 +23,22 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <avr/interrupt.h>
 #include <util/delay.h>
 #include "hal.h"
+#include "debounce.h"
+
+#define BUTTON_MIDDLE		(1 << 0)
+#define BUTTON_LEFT			(1 << 1)
+#define BUTTON_RIGHT		(1 << 2)
+#define BUTTON_UP			(1 << 3)
+#define BUTTON_DOWN			(1 << 4)
 
 static uint8_t stepping;
+static struct {
+	struct debounce_t middle;
+} button_state;
+static uint8_t buttons_pressed;
 
 static void set_stepping(uint8_t step) {
 	MS1_SetInactive();
@@ -98,23 +110,48 @@ static void steps(uint16_t stepcount, uint16_t start_delay, uint16_t end_delay) 
 	}
 }
 
+
+
+ISR(TIMER0_OVF_vect) {
+	if (debounce(&button_state.middle, SWITCH_MIDDLE_IsActive()) == ACTION_PRESSED) {
+		buttons_pressed |= BUTTON_MIDDLE;
+	}
+}
+
 int main(void) {
 	initHAL();
+
+	/* Setup timer for polling buttons */
+	TCCR0 = _BV(CS02);	// CK / 64
+	TIMSK |= _BV(TOIE0);
+
+	/* Enable IRQs */
+	sei();
 
 	/* Initialize A4988 */
 	DIRECTION_SetInactive();
 	RESET_SetInactive();
 	SLEEP_SetInactive();
+	ENABLE_SetInactive();
 	set_stepping(16);
 
+	bool enabled = false;
 	while (true) {
-		/* Pull back */
-		ENABLE_SetActive();
-		steps(500, 300, 200);
+		if (enabled) {
+			/* Pull back */
+			ENABLE_SetActive();
+			steps(500, 300, 200);
 
-		/* Then release */
-		ENABLE_SetInactive();
-		sleep_millis(200);
+			/* Then release */
+			ENABLE_SetInactive();
+			sleep_millis(200);
+		}
+
+		if (buttons_pressed & BUTTON_MIDDLE) {
+			enabled = !enabled;
+			RELAY_SetConditional(enabled);
+		}
+		buttons_pressed = 0;
 	}
 	return 0;
 }

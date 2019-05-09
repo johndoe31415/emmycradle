@@ -53,4 +53,18 @@
 	<portpin name="PF0" template="digoutputinv">
 		<description value="ENABLE" />
 	</portpin>
+	
+	<portpin name="PA0" template="digswitchinput">
+		<description value="SWITCH_UP" />
+	</portpin>
+	<portpin name="PA1" template="digswitchinput">
+		<description value="SWITCH_DOWN" />
+	</portpin>
+	<portpin name="PA2" template="digswitchinput">
+		<description value="SWITCH_MIDDLE" />
+	</portpin>
+	
+	<portpin name="PA6" template="digoutput">
+		<description value="RELAY" />
+	</portpin>
 </HAL>
