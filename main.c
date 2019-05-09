@@ -77,14 +77,18 @@ static void steps(uint16_t stepcount) {
 int main(void) {
 	initHAL();
 
+	/* Initialize A4988 */
 	DIRECTION_SetInactive();
 	RESET_SetInactive();
 	SLEEP_SetInactive();
 	set_stepping(16);
 
 	while (true) {
+		/* Pull back */
 		ENABLE_SetActive();
 		steps(400);
+
+		/* Then release */
 		ENABLE_SetInactive();
 		sleep_millis(200);
 	}
