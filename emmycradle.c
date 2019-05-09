@@ -57,20 +57,44 @@ static void sleep_millis(uint16_t millis) {
 	}
 }
 
-static void sleep_micros(uint16_t micros) {
-	while (micros--) {
-		_delay_us(1);
+static void sleep_units(uint16_t units) {
+	while (units--) {
+		__asm__ __volatile__("");
 	}
 }
 
-static void steps(uint16_t stepcount) {
-	stepcount <<= stepping;
-	uint16_t delay = 500 >> stepping;
-	while (stepcount--) {
+static void steps(uint16_t stepcount, uint16_t start_delay, uint16_t end_delay) {
+	/* Number of steps needs to be larger when we microstep */
+	uint16_t steps = stepcount << stepping;
+	uint16_t midpoint = steps / 2;
+	uint16_t delay = start_delay;
+
+	uint16_t delay_diff = start_delay - end_delay;
+	uint16_t full_slope = delay_diff / midpoint;
+	uint16_t residual_slope = delay_diff % midpoint;
+	uint16_t accumulator = 0;
+
+	while (steps--) {
 		STEP_SetActive();
-		sleep_micros(delay);
+		sleep_units(delay);
 		STEP_SetInactive();
-		sleep_micros(delay);
+		sleep_units(delay);
+
+		int8_t scalar;
+		if (steps > midpoint) {
+			/* Still accelerating, decrease delay */
+			scalar = -1;
+		} else {
+			/* Now decelerating, increase delay */
+			scalar = 1;
+		}
+
+		delay += scalar * full_slope;
+		accumulator += residual_slope;
+		if (accumulator >= midpoint) {
+			delay += scalar;
+			accumulator -= midpoint;
+		}
 	}
 }
 
@@ -86,7 +110,7 @@ int main(void) {
 	while (true) {
 		/* Pull back */
 		ENABLE_SetActive();
-		steps(400);
+		steps(500, 300, 200);
 
 		/* Then release */
 		ENABLE_SetInactive();
