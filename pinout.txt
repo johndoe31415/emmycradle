@@ -1,0 +1,14 @@
+Olimex AVR-MT128
+https://www.olimex.com/Products/AVR/Development/AVR-MT128/
+
+EXT2
+14	PA7		DIRECTION
+13	PC3		STEP
+12	PB7		!SLEEP
+11	PB6		!RESET
+
+ADC
+6	PF3		MS3
+5	PD2		MS2
+4	PF1		MS1
+3	PF0		!ENABLE
