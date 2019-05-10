@@ -24,15 +24,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 #include <util/delay.h>
 #include "hal.h"
 #include "debounce.h"
+#include "hd44780.h"
 
 #define BUTTON_MIDDLE		(1 << 0)
 #define BUTTON_LEFT			(1 << 1)
 #define BUTTON_RIGHT		(1 << 2)
 #define BUTTON_UP			(1 << 3)
 #define BUTTON_DOWN			(1 << 4)
+
+enum mode_t {
+	MODE_OFF,
+	MODE_SLOW,
+	MODE_FAST,
+	MODE_INVALID
+};
 
 static uint8_t stepping;
 static struct {
@@ -60,12 +69,6 @@ static void set_stepping(uint8_t step) {
 		stepping = 4;
 	} else {
 		stepping = 0;
-	}
-}
-
-static void sleep_millis(uint16_t millis) {
-	while (millis--) {
-		_delay_ms(1);
 	}
 }
 
@@ -118,8 +121,20 @@ ISR(TIMER0_OVF_vect) {
 	}
 }
 
+static void update_status(enum mode_t mode) {
+	if (mode == MODE_OFF) {
+		hd44780_print_P(12, 0, PSTR("off "));
+	} else if (mode == MODE_SLOW) {
+		hd44780_print_P(12, 0, PSTR("slow"));
+	} else if (mode == MODE_FAST) {
+		hd44780_print_P(12, 0, PSTR("fast"));
+	}
+}
+
 int main(void) {
 	initHAL();
+	hd44780_init();
+	hd44780_print_P(0, 0, PSTR("Emmy Cradle"));
 
 	/* Setup timer for polling buttons */
 	TCCR0 = _BV(CS02);	// CK / 64
@@ -135,21 +150,37 @@ int main(void) {
 	ENABLE_SetInactive();
 	set_stepping(16);
 
-	bool enabled = false;
+	enum mode_t mode = MODE_OFF;
+	update_status(mode);
 	while (true) {
-		if (enabled) {
-			/* Pull back */
+		if (mode == MODE_SLOW) {
 			ENABLE_SetActive();
+			/* Pull back */
+			DIRECTION_SetInactive();
 			steps(500, 300, 200);
 
 			/* Then release */
+			DIRECTION_SetActive();
+			steps(500, 300, 200);
+		} else if (mode == MODE_FAST) {
+			ENABLE_SetActive();
+			/* Pull back */
+			DIRECTION_SetInactive();
+			steps(700, 200, 100);
+
+			/* Then release */
+			DIRECTION_SetActive();
+			steps(700, 200, 100);
+		} else if (mode == MODE_OFF) {
 			ENABLE_SetInactive();
-			sleep_millis(200);
 		}
 
 		if (buttons_pressed & BUTTON_MIDDLE) {
-			enabled = !enabled;
-			RELAY_SetConditional(enabled);
+			mode++;
+			if (mode == MODE_INVALID) {
+				mode = MODE_OFF;
+			}
+			update_status(mode);
 		}
 		buttons_pressed = 0;
 	}

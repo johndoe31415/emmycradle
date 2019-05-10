@@ -67,4 +67,26 @@
 	<portpin name="PA6" template="digoutput">
 		<description value="RELAY" />
 	</portpin>
+	
+	<portpin name="PC0" template="digoutput">
+		<description value="DISPLAY_RS" />
+	</portpin>
+	<portpin name="PC1" template="digoutput">
+		<description value="DISPLAY_READ" />
+	</portpin>
+	<portpin name="PC2" template="digoutput">
+		<description value="DISPLAY_E" />
+	</portpin>
+	<portpin name="PC4" template="digio">
+		<description value="DISPLAY_D4" />
+	</portpin>
+	<portpin name="PC5" template="digio">
+		<description value="DISPLAY_D5" />
+	</portpin>
+	<portpin name="PC6" template="digio">
+		<description value="DISPLAY_D6" />
+	</portpin>
+	<portpin name="PC7" template="digio">
+		<description value="DISPLAY_D7" />
+	</portpin>
 </HAL>

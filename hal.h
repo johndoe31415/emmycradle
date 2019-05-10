@@ -1,7 +1,7 @@
 /* Automatically generated HAL from hal.xml */
 /* NEVER EDIT MANUALLY */
 
-/* Generated on: 2019-05-09 14:40:00 */
+/* Generated on: 2019-05-10 17:09:45 */
 
 #ifndef __HAL_H__
 #define __HAL_H__
@@ -244,6 +244,177 @@
 #define RELAY_IsActive()                         (RELAY_Get() != 0)
 #define RELAY_Init()                             { RELAY_SetInactive(); RELAY_ModeOutput(); }
 
+/* DISPLAY_D4 -> PC4 (Input/Output, Initially Input, Initially Pullup On) */
+#define DISPLAY_D4_BIT                           4
+#define DISPLAY_D4_PIN                           PINC
+#define DISPLAY_D4_PORT                          PORTC
+#define DISPLAY_D4_DDR                           DDRC
+#define DISPLAY_D4_SetPullupActive()             DISPLAY_D4_PORT |= _BV(DISPLAY_D4_BIT)
+#define DISPLAY_D4_SetPullupInactive()           DISPLAY_D4_PORT &= ~_BV(DISPLAY_D4_BIT)
+#define DISPLAY_D4_ModeInput()                   DISPLAY_D4_DDR &= ~_BV(DISPLAY_D4_BIT)
+#define DISPLAY_D4_IsInput()                     ((DISPLAY_D4_DDR & _BV(DISPLAY_D4_BIT)) == 0)
+#define DISPLAY_D4_Get()                         (DISPLAY_D4_PIN & _BV(DISPLAY_D4_BIT))
+#define DISPLAY_D4_GetBit()                      (DISPLAY_D4_Get() >> DISPLAY_D4_BIT)
+#define DISPLAY_D4_ModeOutput()                  DISPLAY_D4_DDR |= _BV(DISPLAY_D4_BIT)
+#define DISPLAY_D4_IsOutput()                    ((DISPLAY_D4_DDR & _BV(DISPLAY_D4_BIT)) != 0)
+#define DISPLAY_D4_SetHIGH()                     DISPLAY_D4_PORT |= _BV(DISPLAY_D4_BIT)
+#define DISPLAY_D4_SetLOW()                      DISPLAY_D4_PORT &= ~_BV(DISPLAY_D4_BIT)
+#define DISPLAY_D4_Get()                         (DISPLAY_D4_PIN & _BV(DISPLAY_D4_BIT))
+#define DISPLAY_D4_SetInactive()                 DISPLAY_D4_SetLOW()
+#define DISPLAY_D4_SetActive()                   DISPLAY_D4_SetHIGH()
+#define DISPLAY_D4_Toggle()                      DISPLAY_D4_PORT ^= _BV(DISPLAY_D4_BIT)
+#define DISPLAY_D4_SetConditional(condition)     if (condition) DISPLAY_D4_SetActive(); else DISPLAY_D4_SetInactive()
+#define DISPLAY_D4_SetConditionalToggle(conditionon, conditionoff, conditiontoggle) if (conditionon) { DISPLAY_D4_SetActive(); } else if (conditionoff) { DISPLAY_D4_SetInactive(); } else if (conditiontoggle) { DISPLAY_D4_Toggle(); }
+#define DISPLAY_D4_Pulse()                       { DISPLAY_D4_SetActive(); DISPLAY_D4_SetInactive(); }
+#define DISPLAY_D4_PulseNop()                    { DISPLAY_D4_SetActive(); nop(); DISPLAY_D4_SetInactive(); }
+#define DISPLAY_D4_IsInactive()                  (DISPLAY_D4_Get() == 0)
+#define DISPLAY_D4_IsActive()                    (DISPLAY_D4_Get() != 0)
+#define DISPLAY_D4_Init()                        { DISPLAY_D4_SetPullupActive(); DISPLAY_D4_ModeInput(); }
+
+/* DISPLAY_D5 -> PC5 (Input/Output, Initially Input, Initially Pullup On) */
+#define DISPLAY_D5_BIT                           5
+#define DISPLAY_D5_PIN                           PINC
+#define DISPLAY_D5_PORT                          PORTC
+#define DISPLAY_D5_DDR                           DDRC
+#define DISPLAY_D5_SetPullupActive()             DISPLAY_D5_PORT |= _BV(DISPLAY_D5_BIT)
+#define DISPLAY_D5_SetPullupInactive()           DISPLAY_D5_PORT &= ~_BV(DISPLAY_D5_BIT)
+#define DISPLAY_D5_ModeInput()                   DISPLAY_D5_DDR &= ~_BV(DISPLAY_D5_BIT)
+#define DISPLAY_D5_IsInput()                     ((DISPLAY_D5_DDR & _BV(DISPLAY_D5_BIT)) == 0)
+#define DISPLAY_D5_Get()                         (DISPLAY_D5_PIN & _BV(DISPLAY_D5_BIT))
+#define DISPLAY_D5_GetBit()                      (DISPLAY_D5_Get() >> DISPLAY_D5_BIT)
+#define DISPLAY_D5_ModeOutput()                  DISPLAY_D5_DDR |= _BV(DISPLAY_D5_BIT)
+#define DISPLAY_D5_IsOutput()                    ((DISPLAY_D5_DDR & _BV(DISPLAY_D5_BIT)) != 0)
+#define DISPLAY_D5_SetHIGH()                     DISPLAY_D5_PORT |= _BV(DISPLAY_D5_BIT)
+#define DISPLAY_D5_SetLOW()                      DISPLAY_D5_PORT &= ~_BV(DISPLAY_D5_BIT)
+#define DISPLAY_D5_Get()                         (DISPLAY_D5_PIN & _BV(DISPLAY_D5_BIT))
+#define DISPLAY_D5_SetInactive()                 DISPLAY_D5_SetLOW()
+#define DISPLAY_D5_SetActive()                   DISPLAY_D5_SetHIGH()
+#define DISPLAY_D5_Toggle()                      DISPLAY_D5_PORT ^= _BV(DISPLAY_D5_BIT)
+#define DISPLAY_D5_SetConditional(condition)     if (condition) DISPLAY_D5_SetActive(); else DISPLAY_D5_SetInactive()
+#define DISPLAY_D5_SetConditionalToggle(conditionon, conditionoff, conditiontoggle) if (conditionon) { DISPLAY_D5_SetActive(); } else if (conditionoff) { DISPLAY_D5_SetInactive(); } else if (conditiontoggle) { DISPLAY_D5_Toggle(); }
+#define DISPLAY_D5_Pulse()                       { DISPLAY_D5_SetActive(); DISPLAY_D5_SetInactive(); }
+#define DISPLAY_D5_PulseNop()                    { DISPLAY_D5_SetActive(); nop(); DISPLAY_D5_SetInactive(); }
+#define DISPLAY_D5_IsInactive()                  (DISPLAY_D5_Get() == 0)
+#define DISPLAY_D5_IsActive()                    (DISPLAY_D5_Get() != 0)
+#define DISPLAY_D5_Init()                        { DISPLAY_D5_SetPullupActive(); DISPLAY_D5_ModeInput(); }
+
+/* DISPLAY_D6 -> PC6 (Input/Output, Initially Input, Initially Pullup On) */
+#define DISPLAY_D6_BIT                           6
+#define DISPLAY_D6_PIN                           PINC
+#define DISPLAY_D6_PORT                          PORTC
+#define DISPLAY_D6_DDR                           DDRC
+#define DISPLAY_D6_SetPullupActive()             DISPLAY_D6_PORT |= _BV(DISPLAY_D6_BIT)
+#define DISPLAY_D6_SetPullupInactive()           DISPLAY_D6_PORT &= ~_BV(DISPLAY_D6_BIT)
+#define DISPLAY_D6_ModeInput()                   DISPLAY_D6_DDR &= ~_BV(DISPLAY_D6_BIT)
+#define DISPLAY_D6_IsInput()                     ((DISPLAY_D6_DDR & _BV(DISPLAY_D6_BIT)) == 0)
+#define DISPLAY_D6_Get()                         (DISPLAY_D6_PIN & _BV(DISPLAY_D6_BIT))
+#define DISPLAY_D6_GetBit()                      (DISPLAY_D6_Get() >> DISPLAY_D6_BIT)
+#define DISPLAY_D6_ModeOutput()                  DISPLAY_D6_DDR |= _BV(DISPLAY_D6_BIT)
+#define DISPLAY_D6_IsOutput()                    ((DISPLAY_D6_DDR & _BV(DISPLAY_D6_BIT)) != 0)
+#define DISPLAY_D6_SetHIGH()                     DISPLAY_D6_PORT |= _BV(DISPLAY_D6_BIT)
+#define DISPLAY_D6_SetLOW()                      DISPLAY_D6_PORT &= ~_BV(DISPLAY_D6_BIT)
+#define DISPLAY_D6_Get()                         (DISPLAY_D6_PIN & _BV(DISPLAY_D6_BIT))
+#define DISPLAY_D6_SetInactive()                 DISPLAY_D6_SetLOW()
+#define DISPLAY_D6_SetActive()                   DISPLAY_D6_SetHIGH()
+#define DISPLAY_D6_Toggle()                      DISPLAY_D6_PORT ^= _BV(DISPLAY_D6_BIT)
+#define DISPLAY_D6_SetConditional(condition)     if (condition) DISPLAY_D6_SetActive(); else DISPLAY_D6_SetInactive()
+#define DISPLAY_D6_SetConditionalToggle(conditionon, conditionoff, conditiontoggle) if (conditionon) { DISPLAY_D6_SetActive(); } else if (conditionoff) { DISPLAY_D6_SetInactive(); } else if (conditiontoggle) { DISPLAY_D6_Toggle(); }
+#define DISPLAY_D6_Pulse()                       { DISPLAY_D6_SetActive(); DISPLAY_D6_SetInactive(); }
+#define DISPLAY_D6_PulseNop()                    { DISPLAY_D6_SetActive(); nop(); DISPLAY_D6_SetInactive(); }
+#define DISPLAY_D6_IsInactive()                  (DISPLAY_D6_Get() == 0)
+#define DISPLAY_D6_IsActive()                    (DISPLAY_D6_Get() != 0)
+#define DISPLAY_D6_Init()                        { DISPLAY_D6_SetPullupActive(); DISPLAY_D6_ModeInput(); }
+
+/* DISPLAY_D7 -> PC7 (Input/Output, Initially Input, Initially Pullup On) */
+#define DISPLAY_D7_BIT                           7
+#define DISPLAY_D7_PIN                           PINC
+#define DISPLAY_D7_PORT                          PORTC
+#define DISPLAY_D7_DDR                           DDRC
+#define DISPLAY_D7_SetPullupActive()             DISPLAY_D7_PORT |= _BV(DISPLAY_D7_BIT)
+#define DISPLAY_D7_SetPullupInactive()           DISPLAY_D7_PORT &= ~_BV(DISPLAY_D7_BIT)
+#define DISPLAY_D7_ModeInput()                   DISPLAY_D7_DDR &= ~_BV(DISPLAY_D7_BIT)
+#define DISPLAY_D7_IsInput()                     ((DISPLAY_D7_DDR & _BV(DISPLAY_D7_BIT)) == 0)
+#define DISPLAY_D7_Get()                         (DISPLAY_D7_PIN & _BV(DISPLAY_D7_BIT))
+#define DISPLAY_D7_GetBit()                      (DISPLAY_D7_Get() >> DISPLAY_D7_BIT)
+#define DISPLAY_D7_ModeOutput()                  DISPLAY_D7_DDR |= _BV(DISPLAY_D7_BIT)
+#define DISPLAY_D7_IsOutput()                    ((DISPLAY_D7_DDR & _BV(DISPLAY_D7_BIT)) != 0)
+#define DISPLAY_D7_SetHIGH()                     DISPLAY_D7_PORT |= _BV(DISPLAY_D7_BIT)
+#define DISPLAY_D7_SetLOW()                      DISPLAY_D7_PORT &= ~_BV(DISPLAY_D7_BIT)
+#define DISPLAY_D7_Get()                         (DISPLAY_D7_PIN & _BV(DISPLAY_D7_BIT))
+#define DISPLAY_D7_SetInactive()                 DISPLAY_D7_SetLOW()
+#define DISPLAY_D7_SetActive()                   DISPLAY_D7_SetHIGH()
+#define DISPLAY_D7_Toggle()                      DISPLAY_D7_PORT ^= _BV(DISPLAY_D7_BIT)
+#define DISPLAY_D7_SetConditional(condition)     if (condition) DISPLAY_D7_SetActive(); else DISPLAY_D7_SetInactive()
+#define DISPLAY_D7_SetConditionalToggle(conditionon, conditionoff, conditiontoggle) if (conditionon) { DISPLAY_D7_SetActive(); } else if (conditionoff) { DISPLAY_D7_SetInactive(); } else if (conditiontoggle) { DISPLAY_D7_Toggle(); }
+#define DISPLAY_D7_Pulse()                       { DISPLAY_D7_SetActive(); DISPLAY_D7_SetInactive(); }
+#define DISPLAY_D7_PulseNop()                    { DISPLAY_D7_SetActive(); nop(); DISPLAY_D7_SetInactive(); }
+#define DISPLAY_D7_IsInactive()                  (DISPLAY_D7_Get() == 0)
+#define DISPLAY_D7_IsActive()                    (DISPLAY_D7_Get() != 0)
+#define DISPLAY_D7_Init()                        { DISPLAY_D7_SetPullupActive(); DISPLAY_D7_ModeInput(); }
+
+/* DISPLAY_RS -> PC0 (Output, Initially Inactive) */
+#define DISPLAY_RS_BIT                           0
+#define DISPLAY_RS_PIN                           PINC
+#define DISPLAY_RS_PORT                          PORTC
+#define DISPLAY_RS_DDR                           DDRC
+#define DISPLAY_RS_ModeOutput()                  DISPLAY_RS_DDR |= _BV(DISPLAY_RS_BIT)
+#define DISPLAY_RS_IsOutput()                    ((DISPLAY_RS_DDR & _BV(DISPLAY_RS_BIT)) != 0)
+#define DISPLAY_RS_SetHIGH()                     DISPLAY_RS_PORT |= _BV(DISPLAY_RS_BIT)
+#define DISPLAY_RS_SetLOW()                      DISPLAY_RS_PORT &= ~_BV(DISPLAY_RS_BIT)
+#define DISPLAY_RS_Get()                         (DISPLAY_RS_PIN & _BV(DISPLAY_RS_BIT))
+#define DISPLAY_RS_SetInactive()                 DISPLAY_RS_SetLOW()
+#define DISPLAY_RS_SetActive()                   DISPLAY_RS_SetHIGH()
+#define DISPLAY_RS_Toggle()                      DISPLAY_RS_PORT ^= _BV(DISPLAY_RS_BIT)
+#define DISPLAY_RS_SetConditional(condition)     if (condition) DISPLAY_RS_SetActive(); else DISPLAY_RS_SetInactive()
+#define DISPLAY_RS_SetConditionalToggle(conditionon, conditionoff, conditiontoggle) if (conditionon) { DISPLAY_RS_SetActive(); } else if (conditionoff) { DISPLAY_RS_SetInactive(); } else if (conditiontoggle) { DISPLAY_RS_Toggle(); }
+#define DISPLAY_RS_Pulse()                       { DISPLAY_RS_SetActive(); DISPLAY_RS_SetInactive(); }
+#define DISPLAY_RS_PulseNop()                    { DISPLAY_RS_SetActive(); nop(); DISPLAY_RS_SetInactive(); }
+#define DISPLAY_RS_IsInactive()                  (DISPLAY_RS_Get() == 0)
+#define DISPLAY_RS_IsActive()                    (DISPLAY_RS_Get() != 0)
+#define DISPLAY_RS_Init()                        { DISPLAY_RS_SetInactive(); DISPLAY_RS_ModeOutput(); }
+
+/* DISPLAY_READ -> PC1 (Output, Initially Inactive) */
+#define DISPLAY_READ_BIT                         1
+#define DISPLAY_READ_PIN                         PINC
+#define DISPLAY_READ_PORT                        PORTC
+#define DISPLAY_READ_DDR                         DDRC
+#define DISPLAY_READ_ModeOutput()                DISPLAY_READ_DDR |= _BV(DISPLAY_READ_BIT)
+#define DISPLAY_READ_IsOutput()                  ((DISPLAY_READ_DDR & _BV(DISPLAY_READ_BIT)) != 0)
+#define DISPLAY_READ_SetHIGH()                   DISPLAY_READ_PORT |= _BV(DISPLAY_READ_BIT)
+#define DISPLAY_READ_SetLOW()                    DISPLAY_READ_PORT &= ~_BV(DISPLAY_READ_BIT)
+#define DISPLAY_READ_Get()                       (DISPLAY_READ_PIN & _BV(DISPLAY_READ_BIT))
+#define DISPLAY_READ_SetInactive()               DISPLAY_READ_SetLOW()
+#define DISPLAY_READ_SetActive()                 DISPLAY_READ_SetHIGH()
+#define DISPLAY_READ_Toggle()                    DISPLAY_READ_PORT ^= _BV(DISPLAY_READ_BIT)
+#define DISPLAY_READ_SetConditional(condition)   if (condition) DISPLAY_READ_SetActive(); else DISPLAY_READ_SetInactive()
+#define DISPLAY_READ_SetConditionalToggle(conditionon, conditionoff, conditiontoggle) if (conditionon) { DISPLAY_READ_SetActive(); } else if (conditionoff) { DISPLAY_READ_SetInactive(); } else if (conditiontoggle) { DISPLAY_READ_Toggle(); }
+#define DISPLAY_READ_Pulse()                     { DISPLAY_READ_SetActive(); DISPLAY_READ_SetInactive(); }
+#define DISPLAY_READ_PulseNop()                  { DISPLAY_READ_SetActive(); nop(); DISPLAY_READ_SetInactive(); }
+#define DISPLAY_READ_IsInactive()                (DISPLAY_READ_Get() == 0)
+#define DISPLAY_READ_IsActive()                  (DISPLAY_READ_Get() != 0)
+#define DISPLAY_READ_Init()                      { DISPLAY_READ_SetInactive(); DISPLAY_READ_ModeOutput(); }
+
+/* DISPLAY_E -> PC2 (Output, Initially Inactive) */
+#define DISPLAY_E_BIT                            2
+#define DISPLAY_E_PIN                            PINC
+#define DISPLAY_E_PORT                           PORTC
+#define DISPLAY_E_DDR                            DDRC
+#define DISPLAY_E_ModeOutput()                   DISPLAY_E_DDR |= _BV(DISPLAY_E_BIT)
+#define DISPLAY_E_IsOutput()                     ((DISPLAY_E_DDR & _BV(DISPLAY_E_BIT)) != 0)
+#define DISPLAY_E_SetHIGH()                      DISPLAY_E_PORT |= _BV(DISPLAY_E_BIT)
+#define DISPLAY_E_SetLOW()                       DISPLAY_E_PORT &= ~_BV(DISPLAY_E_BIT)
+#define DISPLAY_E_Get()                          (DISPLAY_E_PIN & _BV(DISPLAY_E_BIT))
+#define DISPLAY_E_SetInactive()                  DISPLAY_E_SetLOW()
+#define DISPLAY_E_SetActive()                    DISPLAY_E_SetHIGH()
+#define DISPLAY_E_Toggle()                       DISPLAY_E_PORT ^= _BV(DISPLAY_E_BIT)
+#define DISPLAY_E_SetConditional(condition)      if (condition) DISPLAY_E_SetActive(); else DISPLAY_E_SetInactive()
+#define DISPLAY_E_SetConditionalToggle(conditionon, conditionoff, conditiontoggle) if (conditionon) { DISPLAY_E_SetActive(); } else if (conditionoff) { DISPLAY_E_SetInactive(); } else if (conditiontoggle) { DISPLAY_E_Toggle(); }
+#define DISPLAY_E_Pulse()                        { DISPLAY_E_SetActive(); DISPLAY_E_SetInactive(); }
+#define DISPLAY_E_PulseNop()                     { DISPLAY_E_SetActive(); nop(); DISPLAY_E_SetInactive(); }
+#define DISPLAY_E_IsInactive()                   (DISPLAY_E_Get() == 0)
+#define DISPLAY_E_IsActive()                     (DISPLAY_E_Get() != 0)
+#define DISPLAY_E_Init()                         { DISPLAY_E_SetInactive(); DISPLAY_E_ModeOutput(); }
+
 #define initHAL() {\
 		DIRECTION_Init();\
 		STEP_Init();\
@@ -257,6 +428,13 @@
 		SWITCH_DOWN_Init();\
 		SWITCH_MIDDLE_Init();\
 		RELAY_Init();\
+		DISPLAY_D4_Init();\
+		DISPLAY_D5_Init();\
+		DISPLAY_D6_Init();\
+		DISPLAY_D7_Init();\
+		DISPLAY_RS_Init();\
+		DISPLAY_READ_Init();\
+		DISPLAY_E_Init();\
 }
 
 #endif
