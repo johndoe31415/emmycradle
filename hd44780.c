@@ -62,16 +62,27 @@ static void delay_millis(uint8_t millis) {
 	}
 }
 
-void hd44780_print_P(uint8_t x, uint8_t y, const char *string) {
-	uint8_t rampos = ((y == 0) ? 0 : 0x40) + x;
-	send_cmd(CMD_SET_DDRAM_ADDR(rampos));
-	delay_millis(1);
+void hd44780_print_cursor(const char *string) {
+	uint8_t character;
+	while ((character = *string++) != 0) {
+		send_data(character);
+		delay_millis(1);
+	}
+}
 
+void hd44780_print_P_cursor(const char *string) {
 	uint8_t character;
 	while ((character = pgm_read_byte(string++)) != 0) {
 		send_data(character);
 		delay_millis(1);
 	}
+}
+
+void hd44780_print_P(uint8_t x, uint8_t y, const char *string) {
+	uint8_t rampos = ((y == 0) ? 0 : 0x40) + x;
+	send_cmd(CMD_SET_DDRAM_ADDR(rampos));
+	delay_millis(1);
+	hd44780_print_P_cursor(string);
 }
 
 void hd44780_init(void) {

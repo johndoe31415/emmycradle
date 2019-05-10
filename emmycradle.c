@@ -23,6 +23,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <util/delay.h>
@@ -43,9 +44,15 @@ enum mode_t {
 	MODE_INVALID
 };
 
+static enum mode_t run_mode = MODE_OFF;
+static int16_t timer_mode = -1;
+static bool update_display = false;
+
 static uint8_t stepping;
 static struct {
 	struct debounce_t middle;
+	struct debounce_t left;
+	struct debounce_t right;
 } button_state;
 static uint8_t buttons_pressed;
 
@@ -113,11 +120,33 @@ static void steps(uint16_t stepcount, uint16_t start_delay, uint16_t end_delay) 
 	}
 }
 
-
+static void second_passed(void) {
+	if (timer_mode > 0) {
+		update_display = true;
+		timer_mode--;
+		if (timer_mode == 0) {
+			run_mode = MODE_OFF;
+			timer_mode = -1;
+		}
+	}
+}
 
 ISR(TIMER0_OVF_vect) {
 	if (debounce(&button_state.middle, SWITCH_MIDDLE_IsActive()) == ACTION_PRESSED) {
 		buttons_pressed |= BUTTON_MIDDLE;
+	}
+	if (debounce(&button_state.left, SWITCH_LEFT_IsActive()) == ACTION_PRESSED) {
+		buttons_pressed |= BUTTON_LEFT;
+	}
+	if (debounce(&button_state.right, SWITCH_RIGHT_IsActive()) == ACTION_PRESSED) {
+		buttons_pressed |= BUTTON_RIGHT;
+	}
+
+	static uint8_t second_tick = 250;
+	second_tick--;
+	if (second_tick == 0) {
+		second_tick = 250;
+		second_passed();
 	}
 }
 
@@ -131,13 +160,44 @@ static void update_status(enum mode_t mode) {
 	}
 }
 
+static void itoa(char *string, int16_t value) {
+	bool first = true;
+
+	char *pos = string;
+	while ((value > 0) || first) {
+		uint8_t digit = value % 10;
+		*pos = digit + '0';
+		pos++;
+		value /= 10;
+		first = false;
+	}
+	*pos = 0;
+
+	strrev(string);
+}
+
+static void update_timer_display(int16_t time_secs) {
+	if (time_secs <= 0) {
+		hd44780_print_P(0, 1, PSTR("Timer: off      "));
+	} else {
+		hd44780_print_P(0, 1, PSTR("Timer: "));
+
+		char string[16];
+		int16_t minutes = (time_secs + 30) / 60;
+		itoa(string, minutes);
+		hd44780_print_cursor(string);
+		hd44780_print_P_cursor(PSTR(" min   "));
+	}
+}
+
 int main(void) {
 	initHAL();
 	hd44780_init();
 	hd44780_print_P(0, 0, PSTR("Emmy Cradle"));
 
 	/* Setup timer for polling buttons */
-	TCCR0 = _BV(CS02);	// CK / 64
+	//TCCR0 = _BV(CS02);	// CK / 64
+	TCCR0 = _BV(CS02) | _BV(CS01);	// CK / 256		??? why does this work? CPU runs 8 times faster than expected?
 	TIMSK |= _BV(TOIE0);
 
 	/* Enable IRQs */
@@ -150,10 +210,10 @@ int main(void) {
 	ENABLE_SetInactive();
 	set_stepping(16);
 
-	enum mode_t mode = MODE_OFF;
-	update_status(mode);
+	update_status(run_mode);
+	update_timer_display(timer_mode);
 	while (true) {
-		if (mode == MODE_SLOW) {
+		if (run_mode == MODE_SLOW) {
 			ENABLE_SetActive();
 			/* Pull back */
 			DIRECTION_SetInactive();
@@ -162,7 +222,7 @@ int main(void) {
 			/* Then release */
 			DIRECTION_SetActive();
 			steps(500, 300, 200);
-		} else if (mode == MODE_FAST) {
+		} else if (run_mode == MODE_FAST) {
 			ENABLE_SetActive();
 			/* Pull back */
 			DIRECTION_SetInactive();
@@ -171,18 +231,30 @@ int main(void) {
 			/* Then release */
 			DIRECTION_SetActive();
 			steps(700, 200, 100);
-		} else if (mode == MODE_OFF) {
+		} else if (run_mode == MODE_OFF) {
 			ENABLE_SetInactive();
 		}
 
 		if (buttons_pressed & BUTTON_MIDDLE) {
-			mode++;
-			if (mode == MODE_INVALID) {
-				mode = MODE_OFF;
+			run_mode++;
+			if (run_mode == MODE_INVALID) {
+				run_mode = MODE_OFF;
 			}
-			update_status(mode);
+			update_display = true;
+		}
+		if (buttons_pressed & BUTTON_RIGHT) {
+			if (timer_mode <= 0) {
+				timer_mode = 0;
+			}
+			timer_mode += 10 * 60;
+			update_display = true;
 		}
 		buttons_pressed = 0;
+		if (update_display) {
+			update_display = false;
+			update_status(run_mode);
+			update_timer_display(timer_mode);
+		}
 	}
 	return 0;
 }

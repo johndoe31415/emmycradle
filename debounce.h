@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define TINYDEBOUNCE_THRESHOLD		100
+#define TINYDEBOUNCE_THRESHOLD		12
 
 enum debounce_action_t {
 	NOACTION = 0,

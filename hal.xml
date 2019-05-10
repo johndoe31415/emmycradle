@@ -63,6 +63,12 @@
 	<portpin name="PA2" template="digswitchinput">
 		<description value="SWITCH_MIDDLE" />
 	</portpin>
+	<portpin name="PA3" template="digswitchinput">
+		<description value="SWITCH_LEFT" />
+	</portpin>
+	<portpin name="PA4" template="digswitchinput">
+		<description value="SWITCH_RIGHT" />
+	</portpin>
 	
 	<portpin name="PA6" template="digoutput">
 		<description value="RELAY" />
