@@ -30,6 +30,7 @@
 #include "hal.h"
 #include "debounce.h"
 #include "hd44780.h"
+#include "sincos.h"
 
 #define BUTTON_MIDDLE		(1 << 0)
 #define BUTTON_LEFT			(1 << 1)
@@ -39,8 +40,9 @@
 
 enum mode_t {
 	MODE_OFF,
-	MODE_SLOW,
+	MODE_SLOWING,
 	MODE_FAST,
+	MODE_SINE,
 	MODE_INVALID
 };
 
@@ -124,6 +126,16 @@ static void second_passed(void) {
 	if (timer_mode > 0) {
 		update_display = true;
 		timer_mode--;
+
+		/* TODO DEBUG */
+#if 0
+		if (timer_mode > 30) {
+			timer_mode -= 30;
+		} else {
+			timer_mode = 0;
+		}
+#endif
+
 		if (timer_mode == 0) {
 			run_mode = MODE_OFF;
 			timer_mode = -1;
@@ -153,10 +165,12 @@ ISR(TIMER0_OVF_vect) {
 static void update_status(enum mode_t mode) {
 	if (mode == MODE_OFF) {
 		hd44780_print_P(12, 0, PSTR("off "));
-	} else if (mode == MODE_SLOW) {
-		hd44780_print_P(12, 0, PSTR("slow"));
+	} else if (mode == MODE_SINE) {
+		hd44780_print_P(12, 0, PSTR("sine"));
 	} else if (mode == MODE_FAST) {
 		hd44780_print_P(12, 0, PSTR("fast"));
+	} else if (mode == MODE_SLOWING) {
+		hd44780_print_P(12, 0, PSTR("swng"));
 	}
 }
 
@@ -190,6 +204,24 @@ static void update_timer_display(int16_t time_secs) {
 	}
 }
 
+static void steps_sine(bool invert, uint16_t step_count, uint8_t repetitions) {
+	uint16_t steps = step_count;
+	while (steps--) {
+		uint8_t index = (uint32_t)LOOKUP_TABLE_SIZE * steps / step_count;
+		if (invert) {
+			index = LOOKUP_TABLE_SIZE - 1 - index;
+		}
+		uint16_t delay = 8 * lookup_value(index);
+
+		for (uint8_t i = 0; i < repetitions; i++) {
+			STEP_SetActive();
+			sleep_units(delay);
+			STEP_SetInactive();
+			sleep_units(delay);
+		}
+	}
+}
+
 int main(void) {
 	initHAL();
 	hd44780_init();
@@ -213,15 +245,15 @@ int main(void) {
 	update_status(run_mode);
 	update_timer_display(timer_mode);
 	while (true) {
-		if (run_mode == MODE_SLOW) {
+		if (run_mode == MODE_SINE) {
 			ENABLE_SetActive();
 			/* Pull back */
 			DIRECTION_SetInactive();
-			steps(500, 300, 200);
+			steps_sine(false, 270, 30);
 
 			/* Then release */
 			DIRECTION_SetActive();
-			steps(500, 300, 200);
+			steps_sine(true, 270, 30);
 		} else if (run_mode == MODE_FAST) {
 			ENABLE_SetActive();
 			/* Pull back */
@@ -231,6 +263,21 @@ int main(void) {
 			/* Then release */
 			DIRECTION_SetActive();
 			steps(700, 200, 100);
+		} else if (run_mode == MODE_SLOWING) {
+			if (timer_mode > 0) {
+				uint16_t speed = (timer_mode > 800) ? 0 : (800 - timer_mode) / 4;
+				ENABLE_SetActive();
+
+				/* Pull back */
+				DIRECTION_SetInactive();
+				steps(500, 200 + speed, 100 + speed);
+
+				/* Then release */
+				DIRECTION_SetActive();
+				steps(500, 200 + speed, 100 + speed);
+			} else {
+				ENABLE_SetInactive();
+			}
 		} else if (run_mode == MODE_OFF) {
 			ENABLE_SetInactive();
 		}
