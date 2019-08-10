@@ -242,6 +242,42 @@ int main(void) {
 	ENABLE_SetInactive();
 	set_stepping(16);
 
+	/* Put OC1B in PWM mode */
+	TCCR1A = _BV(COM1B1) | _BV(WGM11);
+	TCCR1B = _BV(CS11) | _BV(WGM13) | _BV(WGM12);	/* CTC mode, CK / 8 */
+
+	/* f = 16e6 / 8 / ICR1 */
+	/* Absolute maximum frequency for stepper driver: ~15.4 kHz in 16-step
+	 * microstepping mode (ICR1 = 130) */
+	ICR1 = 150;
+	OCR1B = ICR1 / 2;
+	while (true);
+
+
+	ENABLE_SetActive();
+
+	uint16_t speed = 150;
+	int8_t accu = 1;
+	while (true) {
+		OCR1B = speed / 2;
+		ICR1 = speed;
+
+		speed += accu;
+		if (speed >= 300) {
+			accu = -accu;
+			speed = 300;
+		} else if (speed <= 150) {
+			accu = -accu;
+			speed = 150;
+		}
+
+
+
+//		STEP_Toggle();
+		_delay_ms(3);
+	}
+
+#if 0
 	update_status(run_mode);
 	update_timer_display(timer_mode);
 	while (true) {
@@ -303,5 +339,6 @@ int main(void) {
 			update_timer_display(timer_mode);
 		}
 	}
+#endif
 	return 0;
 }

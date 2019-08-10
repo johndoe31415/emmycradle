@@ -1,7 +1,7 @@
 /* Automatically generated HAL from hal.xml */
 /* NEVER EDIT MANUALLY */
 
-/* Generated on: 2019-05-10 18:29:19 */
+/* Generated on: 2019-08-10 18:19:54 */
 
 #ifndef __HAL_H__
 #define __HAL_H__
@@ -31,11 +31,11 @@
 #define DIRECTION_IsActive()                     (DIRECTION_Get() != 0)
 #define DIRECTION_Init()                         { DIRECTION_SetInactive(); DIRECTION_ModeOutput(); }
 
-/* STEP -> PC3 (Output, Initially Inactive) */
-#define STEP_BIT                                 3
-#define STEP_PIN                                 PINC
-#define STEP_PORT                                PORTC
-#define STEP_DDR                                 DDRC
+/* STEP -> PB6 (Output, Initially Inactive) */
+#define STEP_BIT                                 6
+#define STEP_PIN                                 PINB
+#define STEP_PORT                                PORTB
+#define STEP_DDR                                 DDRB
 #define STEP_ModeOutput()                        STEP_DDR |= _BV(STEP_BIT)
 #define STEP_IsOutput()                          ((STEP_DDR & _BV(STEP_BIT)) != 0)
 #define STEP_SetHIGH()                           STEP_PORT |= _BV(STEP_BIT)
@@ -73,11 +73,11 @@
 #define SLEEP_IsActive()                         (SLEEP_Get() == 0)
 #define SLEEP_Init()                             { SLEEP_SetInactive(); SLEEP_ModeOutput(); }
 
-/* RESET -> PB6 (Output, Initially Inactive, Active-Low) */
-#define RESET_BIT                                6
-#define RESET_PIN                                PINB
-#define RESET_PORT                               PORTB
-#define RESET_DDR                                DDRB
+/* RESET -> PC3 (Output, Initially Inactive, Active-Low) */
+#define RESET_BIT                                3
+#define RESET_PIN                                PINC
+#define RESET_PORT                               PORTC
+#define RESET_DDR                                DDRC
 #define RESET_ModeOutput()                       RESET_DDR |= _BV(RESET_BIT)
 #define RESET_IsOutput()                         ((RESET_DDR & _BV(RESET_BIT)) != 0)
 #define RESET_SetHIGH()                          RESET_PORT |= _BV(RESET_BIT)

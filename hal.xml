@@ -32,13 +32,13 @@
 	<portpin name="PA7" template="digoutput">
 		<description value="DIRECTION" />
 	</portpin>
-	<portpin name="PC3" template="digoutput">
+	<portpin name="PB6" template="digoutput">
 		<description value="STEP" />
 	</portpin>
 	<portpin name="PB7" template="digoutputinv">
 		<description value="SLEEP" />
 	</portpin>
-	<portpin name="PB6" template="digoutputinv">
+	<portpin name="PC3" template="digoutputinv">
 		<description value="RESET" />
 	</portpin>
 	<portpin name="PF3" template="digoutput">
