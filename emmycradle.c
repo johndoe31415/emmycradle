@@ -30,7 +30,6 @@
 #include "hal.h"
 #include "debounce.h"
 #include "hd44780.h"
-#include "sincos.h"
 
 #define BUTTON_MIDDLE		(1 << 0)
 #define BUTTON_LEFT			(1 << 1)
@@ -46,10 +45,18 @@ enum mode_t {
 	MODE_INVALID
 };
 
-static enum mode_t run_mode = MODE_OFF;
-static int16_t timer_mode = -1;
-static bool update_display = false;
+enum interpolation_mode_t {
+	INTERPOLATION_LINEAR,
+	INTERPOLATION_SINUSOIDAL,
+};
 
+struct system_state_t {
+	bool active;
+	uint8_t interpolation_mode;
+	uint16_t timer_seconds;
+	uint8_t speed;
+	uint8_t length;
+};
 static uint8_t stepping;
 static struct {
 	struct debounce_t middle;
@@ -57,6 +64,23 @@ static struct {
 	struct debounce_t right;
 } button_state;
 static uint8_t buttons_pressed;
+
+static const uint8_t sine_table[] PROGMEM = {
+	140, 141, 142, 143, 144, 145, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154,
+	154, 155, 156, 157, 158, 159, 160, 161, 162, 162, 163, 164, 165, 166, 167, 168,
+	169, 169, 170, 171, 172, 173, 174, 175, 176, 176, 177, 178, 179, 180, 181, 181,
+	182, 183, 184, 185, 186, 186, 187, 188, 189, 190, 191, 191, 192, 193, 194, 195,
+	195, 196, 197, 198, 199, 199, 200, 201, 202, 202, 203, 204, 205, 205, 206, 207,
+	208, 208, 209, 210, 210, 211, 212, 213, 213, 214, 215, 215, 216, 217, 217, 218,
+	219, 219, 220, 221, 221, 222, 223, 223, 224, 224, 225, 226, 226, 227, 227, 228,
+	229, 229, 230, 230, 231, 231, 232, 233, 233, 234, 234, 235, 235, 236, 236, 237,
+	237, 238, 238, 239, 239, 239, 240, 240, 241, 241, 242, 242, 242, 243, 243, 244,
+	244, 244, 245, 245, 246, 246, 246, 247, 247, 247, 248, 248, 248, 249, 249, 249,
+	249, 250, 250, 250, 250, 251, 251, 251, 251, 252, 252, 252, 252, 252, 253, 253,
+	253, 253, 253, 253, 254, 254, 254, 254, 254, 254, 254, 254, 254, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255,
+};
+#define SINETABLE_SIZE		(sizeof(sine_table) / sizeof(uint8_t))
 
 static void set_stepping(uint8_t step) {
 	MS1_SetInactive();
@@ -80,7 +104,7 @@ static void set_stepping(uint8_t step) {
 		stepping = 0;
 	}
 }
-
+#if 0
 static void sleep_units(uint16_t units) {
 	while (units--) {
 		__asm__ __volatile__("");
@@ -121,26 +145,9 @@ static void steps(uint16_t stepcount, uint16_t start_delay, uint16_t end_delay) 
 		}
 	}
 }
-
-static void second_passed(void) {
-	if (timer_mode > 0) {
-		update_display = true;
-		timer_mode--;
-
-		/* TODO DEBUG */
-#if 0
-		if (timer_mode > 30) {
-			timer_mode -= 30;
-		} else {
-			timer_mode = 0;
-		}
 #endif
 
-		if (timer_mode == 0) {
-			run_mode = MODE_OFF;
-			timer_mode = -1;
-		}
-	}
+static void second_passed(void) {
 }
 
 ISR(TIMER0_OVF_vect) {
@@ -161,19 +168,7 @@ ISR(TIMER0_OVF_vect) {
 		second_passed();
 	}
 }
-
-static void update_status(enum mode_t mode) {
-	if (mode == MODE_OFF) {
-		hd44780_print_P(12, 0, PSTR("off "));
-	} else if (mode == MODE_SINE) {
-		hd44780_print_P(12, 0, PSTR("sine"));
-	} else if (mode == MODE_FAST) {
-		hd44780_print_P(12, 0, PSTR("fast"));
-	} else if (mode == MODE_SLOWING) {
-		hd44780_print_P(12, 0, PSTR("swng"));
-	}
-}
-
+#if 0
 static void itoa(char *string, int16_t value) {
 	bool first = true;
 
@@ -189,7 +184,9 @@ static void itoa(char *string, int16_t value) {
 
 	strrev(string);
 }
+#endif
 
+#if 0
 static void update_timer_display(int16_t time_secs) {
 	if (time_secs <= 0) {
 		hd44780_print_P(0, 1, PSTR("Timer: off      "));
@@ -221,213 +218,16 @@ static void steps_sine(bool invert, uint16_t step_count, uint8_t repetitions) {
 		}
 	}
 }
+#endif
 
 
-static const uint8_t sincos_curve[] PROGMEM = {
-140,
-141,
-142,
-143,
-144,
-145,
-145,
-146,
-147,
-148,
-149,
-150,
-151,
-152,
-153,
-154,
-154,
-155,
-156,
-157,
-158,
-159,
-160,
-161,
-162,
-162,
-163,
-164,
-165,
-166,
-167,
-168,
-169,
-169,
-170,
-171,
-172,
-173,
-174,
-175,
-176,
-176,
-177,
-178,
-179,
-180,
-181,
-181,
-182,
-183,
-184,
-185,
-186,
-186,
-187,
-188,
-189,
-190,
-191,
-191,
-192,
-193,
-194,
-195,
-195,
-196,
-197,
-198,
-199,
-199,
-200,
-201,
-202,
-202,
-203,
-204,
-205,
-205,
-206,
-207,
-208,
-208,
-209,
-210,
-210,
-211,
-212,
-213,
-213,
-214,
-215,
-215,
-216,
-217,
-217,
-218,
-219,
-219,
-220,
-221,
-221,
-222,
-223,
-223,
-224,
-224,
-225,
-226,
-226,
-227,
-227,
-228,
-229,
-229,
-230,
-230,
-231,
-231,
-232,
-233,
-233,
-234,
-234,
-235,
-235,
-236,
-236,
-237,
-237,
-238,
-238,
-239,
-239,
-239,
-240,
-240,
-241,
-241,
-242,
-242,
-242,
-243,
-243,
-244,
-244,
-244,
-245,
-245,
-246,
-246,
-246,
-247,
-247,
-247,
-248,
-248,
-248,
-249,
-249,
-249,
-249,
-250,
-250,
-250,
-250,
-251,
-251,
-251,
-251,
-252,
-252,
-252,
-252,
-252,
-253,
-253,
-253,
-253,
-253,
-253,
-254,
-254,
-254,
-254,
-254,
-254,
-254,
-254,
-254,
-255,
-255,
-255,
-255,
-255,
-255,
-255,
-255,
-255,
-255,
-255,
-};
-#define SINCOS_SIZE		(sizeof(sincos_curve) / sizeof(uint8_t))
+static char displaybuffer[2 * 16];
 
-static char displaybuffer[2 * 16] = "Emmycradle fdioshjfiodsj";
+static const char char_heart[8] PROGMEM = { 0x0, 0xa, 0x1f, 0x1f, 0x1f, 0xe, 0x4, 0x0 };
+static const char char_lin_l[8] PROGMEM = { 0x0, 0x8, 0x14, 0x2, 0x1, 0x0, 0x0, 0x0 };
+static const char char_lin_r[8] PROGMEM = { 0x0, 0x0, 0x0, 0x0, 0x1, 0x2, 0x14, 0x8 };
+static const char char_sine_l[8] PROGMEM = { 0x0, 0xc, 0x12, 0x1, 0x1, 0x0, 0x0, 0x0 };
+static const char char_sine_r[8] PROGMEM = { 0x0, 0x0, 0x0, 0x1, 0x1, 0x2, 0x1c, 0x0 };
 
 static void refresh_display(void) {
 	hd44780_print_charcnt(0, 0, displaybuffer + (16 * 0), 16);
@@ -437,7 +237,19 @@ static void refresh_display(void) {
 int main(void) {
 	initHAL();
 	hd44780_init();
-	hd44780_print_P(0, 0, PSTR("Emmy Cradle"));
+
+	hd44780_define_custom_char_P(0, char_heart);
+	hd44780_define_custom_char_P(1, char_lin_l);
+	hd44780_define_custom_char_P(2, char_lin_r);
+	hd44780_define_custom_char_P(3, char_sine_l);
+	hd44780_define_custom_char_P(4, char_sine_r);
+
+	memcpy_P(displaybuffer, PSTR("  \x00\x00\x00 Emmy \x00\x00\x00  "
+				                 " \x00\x00\x00 Cradle \x00\x00\x00 "), 32);
+	refresh_display();
+	_delay_ms(1000);
+	memset(displaybuffer, ' ', 32);
+	refresh_display();
 
 	/* Setup timer for polling buttons */
 	//TCCR0 = _BV(CS02);	// CK / 64
@@ -470,7 +282,7 @@ int main(void) {
 	int16_t index = 0;
 	int16_t count = 1;
 	while (true) {
-		uint16_t period = pgm_read_byte(sincos_curve + index);
+		uint16_t period = pgm_read_byte(sine_table + index);
 		TCNT1 = 0;
 		ICR1 = period;
 		OCR1B = period / 2;
@@ -478,8 +290,8 @@ int main(void) {
 		if (index < 0) {
 			index = 1;
 			count = -count;
-		} else if (index >= SINCOS_SIZE) {
-			index = SINCOS_SIZE - 2;
+		} else if (index >= SINETABLE_SIZE) {
+			index = SINETABLE_SIZE - 2;
 			count = -count;
 		}
 

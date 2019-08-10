@@ -105,6 +105,16 @@ void hd44780_print_charcnt(uint8_t x, uint8_t y, const char *string, uint8_t cha
 	}
 }
 
+void hd44780_define_custom_char_P(uint8_t charid, const char *chardef_pgmem) {
+	send_cmd(CMD_SET_CGRAM_ADDR(8 * charid));
+	delay_millis(1);
+	for (uint8_t i = 0; i < 8; i++) {
+		char character = pgm_read_byte(chardef_pgmem + i);
+		hd44780_printchar(character);
+		delay_millis(1);
+	}
+}
+
 void hd44780_init(void) {
 	DISPLAY_READ_SetInactive();
 	DISPLAY_RS_SetInactive();
