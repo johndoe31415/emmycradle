@@ -54,9 +54,12 @@
 #define CMD_SET_DDRAM_ADDR(add)					(0x80 | (((add) & 0x7f)))
 
 /*************** AUTO GENERATED SECTION FOLLOWS ***************/
+void hd44780_printchar(char character);
 void hd44780_print_cursor(const char *string);
 void hd44780_print_P_cursor(const char *string);
+void hd44780_moveto(uint8_t x, uint8_t y);
 void hd44780_print_P(uint8_t x, uint8_t y, const char *string);
+void hd44780_print_charcnt(uint8_t x, uint8_t y, const char *string, uint8_t char_cnt);
 void hd44780_init(void);
 /***************  AUTO GENERATED SECTION ENDS   ***************/
 

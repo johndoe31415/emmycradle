@@ -222,6 +222,218 @@ static void steps_sine(bool invert, uint16_t step_count, uint8_t repetitions) {
 	}
 }
 
+
+static const uint8_t sincos_curve[] PROGMEM = {
+140,
+141,
+142,
+143,
+144,
+145,
+145,
+146,
+147,
+148,
+149,
+150,
+151,
+152,
+153,
+154,
+154,
+155,
+156,
+157,
+158,
+159,
+160,
+161,
+162,
+162,
+163,
+164,
+165,
+166,
+167,
+168,
+169,
+169,
+170,
+171,
+172,
+173,
+174,
+175,
+176,
+176,
+177,
+178,
+179,
+180,
+181,
+181,
+182,
+183,
+184,
+185,
+186,
+186,
+187,
+188,
+189,
+190,
+191,
+191,
+192,
+193,
+194,
+195,
+195,
+196,
+197,
+198,
+199,
+199,
+200,
+201,
+202,
+202,
+203,
+204,
+205,
+205,
+206,
+207,
+208,
+208,
+209,
+210,
+210,
+211,
+212,
+213,
+213,
+214,
+215,
+215,
+216,
+217,
+217,
+218,
+219,
+219,
+220,
+221,
+221,
+222,
+223,
+223,
+224,
+224,
+225,
+226,
+226,
+227,
+227,
+228,
+229,
+229,
+230,
+230,
+231,
+231,
+232,
+233,
+233,
+234,
+234,
+235,
+235,
+236,
+236,
+237,
+237,
+238,
+238,
+239,
+239,
+239,
+240,
+240,
+241,
+241,
+242,
+242,
+242,
+243,
+243,
+244,
+244,
+244,
+245,
+245,
+246,
+246,
+246,
+247,
+247,
+247,
+248,
+248,
+248,
+249,
+249,
+249,
+249,
+250,
+250,
+250,
+250,
+251,
+251,
+251,
+251,
+252,
+252,
+252,
+252,
+252,
+253,
+253,
+253,
+253,
+253,
+253,
+254,
+254,
+254,
+254,
+254,
+254,
+254,
+254,
+254,
+255,
+255,
+255,
+255,
+255,
+255,
+255,
+255,
+255,
+255,
+255,
+};
+#define SINCOS_SIZE		(sizeof(sincos_curve) / sizeof(uint8_t))
+
+static char displaybuffer[2 * 16] = "Emmycradle fdioshjfiodsj";
+
+static void refresh_display(void) {
+	hd44780_print_charcnt(0, 0, displaybuffer + (16 * 0), 16);
+	hd44780_print_charcnt(0, 1, displaybuffer + (16 * 1), 16);
+}
+
 int main(void) {
 	initHAL();
 	hd44780_init();
@@ -251,30 +463,29 @@ int main(void) {
 	/* f = 16e6 / 8 / ICR1 */
 	/* Absolute maximum frequency for stepper driver: ~15.4 kHz in 16-step
 	 * microstepping mode (ICR1 = 130) */
-	ICR1 = 150;
+	ENABLE_SetActive();
+	ICR1 = 500;
 	OCR1B = ICR1 / 2;
 
-	ENABLE_SetActive();
-
-	uint16_t speed = 150;
-	int8_t accu = 1;
+	int16_t index = 0;
+	int16_t count = 1;
 	while (true) {
-		OCR1B = speed / 2;
-		ICR1 = speed;
-
-		speed += accu;
-		if (speed >= 300) {
-			accu = -accu;
-			speed = 300;
-		} else if (speed <= 150) {
-			accu = -accu;
-			speed = 150;
+		uint16_t period = pgm_read_byte(sincos_curve + index);
+		TCNT1 = 0;
+		ICR1 = period;
+		OCR1B = period / 2;
+		index = index + count;
+		if (index < 0) {
+			index = 1;
+			count = -count;
+		} else if (index >= SINCOS_SIZE) {
+			index = SINCOS_SIZE - 2;
+			count = -count;
 		}
 
-
-
-//		STEP_Toggle();
-		_delay_ms(3);
+		_delay_ms(1);
+		displaybuffer[0]++;
+		refresh_display();
 	}
 
 #if 0

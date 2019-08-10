@@ -56,33 +56,53 @@ static void send_data(uint8_t cmd) {
 	send_8bit(cmd);
 }
 
+static void delay_micros(uint8_t micros) {
+	while (micros--) {
+		_delay_us(1);
+	}
+}
+
 static void delay_millis(uint8_t millis) {
 	while (millis--) {
 		_delay_ms(1);
 	}
 }
 
+void hd44780_printchar(char character) {
+	send_data(character);
+	delay_micros(35);
+}
+
 void hd44780_print_cursor(const char *string) {
 	uint8_t character;
 	while ((character = *string++) != 0) {
-		send_data(character);
-		delay_millis(1);
+		hd44780_printchar(character);
 	}
 }
 
 void hd44780_print_P_cursor(const char *string) {
 	uint8_t character;
 	while ((character = pgm_read_byte(string++)) != 0) {
-		send_data(character);
-		delay_millis(1);
+		hd44780_printchar(character);
 	}
 }
 
-void hd44780_print_P(uint8_t x, uint8_t y, const char *string) {
+void hd44780_moveto(uint8_t x, uint8_t y) {
 	uint8_t rampos = ((y == 0) ? 0 : 0x40) + x;
 	send_cmd(CMD_SET_DDRAM_ADDR(rampos));
-	delay_millis(1);
+	delay_micros(35);
+}
+
+void hd44780_print_P(uint8_t x, uint8_t y, const char *string) {
+	hd44780_moveto(x, y);
 	hd44780_print_P_cursor(string);
+}
+
+void hd44780_print_charcnt(uint8_t x, uint8_t y, const char *string, uint8_t char_cnt) {
+	hd44780_moveto(x, y);
+	for (uint8_t i = 0; i < char_cnt; i++) {
+		hd44780_printchar(string[i]);
+	}
 }
 
 void hd44780_init(void) {
