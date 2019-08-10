@@ -242,7 +242,9 @@ int main(void) {
 	ENABLE_SetInactive();
 	set_stepping(16);
 
-	/* Put OC1B in PWM mode */
+	/* Put OC1B in fast PWM mode (Mode14) */
+	/* TCCR1A : COM1B1 COM1B0 WGM11 WGM10 */
+	/* TCCR1B : WGM13 WGM12               CS12 CS11 CS10 */
 	TCCR1A = _BV(COM1B1) | _BV(WGM11);
 	TCCR1B = _BV(CS11) | _BV(WGM13) | _BV(WGM12);	/* CTC mode, CK / 8 */
 
@@ -251,8 +253,6 @@ int main(void) {
 	 * microstepping mode (ICR1 = 130) */
 	ICR1 = 150;
 	OCR1B = ICR1 / 2;
-	while (true);
-
 
 	ENABLE_SetActive();
 
