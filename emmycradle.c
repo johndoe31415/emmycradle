@@ -475,8 +475,8 @@ int main(void) {
 	refresh_display();
 	_delay_ms(1000);
 
-	memcpy_P(displaybuffer, PSTR("    From Dad    "
-				                 "We love you Emmy"), 32);
+	memcpy_P(displaybuffer, PSTR("By Dad with Love"
+				                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"), 32);
 	refresh_display();
 	_delay_ms(1000);
 
