@@ -30,7 +30,7 @@ uint8_t debounce(struct debounce_t *button, bool state) {
 		}
 	} else {
 		button->counter++;
-		if (button->counter == TINYDEBOUNCE_THRESHOLD) {
+		if (button->counter >= DEBOUNCE_THRESHOLD) {
 			button->counter = 0;
 			button->last_state = state;
 			return state ? ACTION_PRESSED : ACTION_RELEASED;

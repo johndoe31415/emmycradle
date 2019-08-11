@@ -4,9 +4,9 @@ DEVICE := atmega128
 DUDE_DEV := m128
 CLOCK := 16000000
 OBJS := emmycradle.o debounce.o hd44780.o
-
+BUILD_REVISION := $(shell git describe --abbrev=10 --dirty --always)
 CC := avr-gcc
-CFLAGS := -std=c11 -g3 -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
+CFLAGS := -std=c11 -g3 -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -DBUILD_REVISION=\"$(BUILD_REVISION)\"
 CFLAGS += -Wall -Wmissing-prototypes -Wstrict-prototypes -Werror=implicit-function-declaration -Werror=format -Wshadow
 
 all: emmycradle emmycradle.bin

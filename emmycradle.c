@@ -37,6 +37,8 @@
 #define BUTTON_UP			(1 << 3)
 #define BUTTON_DOWN			(1 << 4)
 
+#define TIMER_INCREMENT_SECONDS		(5 * 60)
+
 enum interpolation_mode_t {
 	INTERPOLATION_LINEAR,
 	INTERPOLATION_SINUSOIDAL,
@@ -137,7 +139,7 @@ static const uint16_t maximum_speed_table[] PROGMEM = {
 
 
 static void pwm_enable(void) {
-	/* Put OC1B in PWM mode */
+	/* Put OC1B in fast PWM mode (mode 14) */
 	/* TCCR1A : COM1B1 COM1B0 WGM11 WGM10                   */
 	/* TCCR1B : WGM13 WGM12                  CS12 CS11 CS10 */
 	TCNT1 = 0;
@@ -148,6 +150,9 @@ static void pwm_enable(void) {
 }
 
 static void pwm_set_period(uint16_t period) {
+	/* f = 16e6 / 8 / ICR1 */
+	/* Absolute maximum frequency for stepper driver: ~15.4 kHz in 16-step
+	 * microstepping mode (ICR1 = 130) */
 	TCNT1 = 0;
 	ICR1 = period;
 	OCR1B = period / 2;
@@ -293,8 +298,8 @@ static void check_buttons(void) {
 			system_state.interpolation_mode = (system_state.interpolation_mode == INTERPOLATION_LINEAR) ? INTERPOLATION_SINUSOIDAL : INTERPOLATION_LINEAR;
 		}
 		if (system_state.menu_active == ACTIVE_MENU_TIMER) {
-			if (system_state.timer_seconds < 3600) {
-				system_state.timer_seconds += 120;
+			if (system_state.timer_seconds < 3600 - TIMER_INCREMENT_SECONDS) {
+				system_state.timer_seconds += TIMER_INCREMENT_SECONDS;
 			}
 		}
 		if (system_state.menu_active == ACTIVE_MENU_SPEED) {
@@ -314,8 +319,8 @@ static void check_buttons(void) {
 			system_state.interpolation_mode = (system_state.interpolation_mode == INTERPOLATION_LINEAR) ? INTERPOLATION_SINUSOIDAL : INTERPOLATION_LINEAR;
 		}
 		if (system_state.menu_active == ACTIVE_MENU_TIMER) {
-			if (system_state.timer_seconds >= 120) {
-				system_state.timer_seconds -= 120;
+			if (system_state.timer_seconds >= TIMER_INCREMENT_SECONDS) {
+				system_state.timer_seconds -= TIMER_INCREMENT_SECONDS;
 			} else {
 				system_state.timer_seconds = 0;
 			}
@@ -336,30 +341,27 @@ static void check_buttons(void) {
 }
 
 static void second_passed(void) {
+	static uint8_t last_reduction_ago_secs = 0;
+	if (last_reduction_ago_secs < 0xff) {
+		last_reduction_ago_secs++;
+	}
+
 	if (system_state.timer_seconds) {
 		system_state.timer_seconds--;
 		if (system_state.timer_seconds == 0) {
 			/* Shutoff. */
 			system_state.active = false;
-		} else if (system_state.timer_seconds <= 2 * 60) {
-			/* Last 2 minutes */
-			if (system_state.speed > 1) {
-				system_state.speed--;
-			}
-		} else if (system_state.timer_seconds <= 4 * 60) {
-			/* Last 4 minutes */
-			if (system_state.speed > 2) {
-				system_state.speed--;
-			}
-		} else if (system_state.timer_seconds <= 6 * 60) {
-			/* Last 6 minutes */
-			if (system_state.speed > 3) {
-				system_state.speed--;
-			}
-		} else if (system_state.timer_seconds > 8) {
-			/* Last 8 minutes */
-			if (system_state.speed > 4) {
-				system_state.speed--;
+		} else {
+			if (last_reduction_ago_secs > 30) {
+				/* Reduce speed only at max every 30 seconds */
+				bool want_reduce_speed = false;
+				for (uint8_t speed = 1; speed <= 9; speed++) {
+					want_reduce_speed |= ((system_state.timer_seconds <= speed * 60) && (system_state.speed > speed));
+				}
+				if (want_reduce_speed) {
+					last_reduction_ago_secs = 0;
+					system_state.speed--;
+				}
 			}
 		}
 	}
@@ -472,12 +474,23 @@ int main(void) {
 				                 " \x00\x00\x00 Cradle \x00\x00\x00 "), 32);
 	refresh_display();
 	_delay_ms(1000);
+
+	memcpy_P(displaybuffer, PSTR("    From Dad    "
+				                 "We love you Emmy"), 32);
+	refresh_display();
+	_delay_ms(1000);
+
+	memset(displaybuffer, ' ', 32);
+	strcpy_P_noterm(displaybuffer, PSTR("Git commit:"));
+	strcpy_P_noterm(displaybuffer + 16, PSTR(BUILD_REVISION));
+	refresh_display();
+	_delay_ms(1000);
+
 	memset(displaybuffer, ' ', 32);
 	refresh_display();
 
 	/* Setup timer for polling buttons */
-	//TCCR0 = _BV(CS02);	// CK / 64
-	TCCR0 = _BV(CS02) | _BV(CS01);	// CK / 256		??? why does this work? CPU runs 8 times faster than expected?
+	TCCR0 = _BV(CS02) | _BV(CS01);	// CK / 256, i.e. OVF 4.096ms @ 16 MHz
 	TIMSK |= _BV(TOIE0);
 
 	/* Enable IRQs */
@@ -490,17 +503,12 @@ int main(void) {
 	ENABLE_SetInactive();
 	set_stepping(16);
 
-
-
-	/* f = 16e6 / 8 / ICR1 */
-	/* Absolute maximum frequency for stepper driver: ~15.4 kHz in 16-step
-	 * microstepping mode (ICR1 = 130) */
-
 	while (true) {
 		if (!system_state.active) {
 			ENABLE_SetInactive();
 			STEP_SetInactive();
 			pwm_disable();
+			memset(&motor_actuation_state, 0, sizeof(struct motor_actuation_state_t));
 		} else {
 			actuate_motor();
 		}
