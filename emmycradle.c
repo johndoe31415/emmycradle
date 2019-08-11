@@ -37,17 +37,24 @@
 #define BUTTON_UP			(1 << 3)
 #define BUTTON_DOWN			(1 << 4)
 
-enum mode_t {
-	MODE_OFF,
-	MODE_SLOWING,
-	MODE_FAST,
-	MODE_SINE,
-	MODE_INVALID
-};
-
 enum interpolation_mode_t {
 	INTERPOLATION_LINEAR,
 	INTERPOLATION_SINUSOIDAL,
+};
+
+enum active_menu_t {
+	ACTIVE_MENU_WAVEFORM,
+	ACTIVE_MENU_TIMER,
+	ACTIVE_MENU_SPEED,
+	ACTIVE_MENU_LENGTH,
+	ACTIVE_MENU_LAST,
+};
+
+struct motor_actuation_state_t {
+	uint8_t lookup_index;
+	bool falling;
+	uint16_t distance_travelled;
+	uint8_t current_speed;
 };
 
 struct system_state_t {
@@ -56,31 +63,186 @@ struct system_state_t {
 	uint16_t timer_seconds;
 	uint8_t speed;
 	uint8_t length;
+	uint8_t menu_active;
 };
 static uint8_t stepping;
 static struct {
 	struct debounce_t middle;
 	struct debounce_t left;
 	struct debounce_t right;
+	struct debounce_t up;
+	struct debounce_t down;
 } button_state;
 static uint8_t buttons_pressed;
-
-static const uint8_t sine_table[] PROGMEM = {
-	140, 141, 142, 143, 144, 145, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154,
-	154, 155, 156, 157, 158, 159, 160, 161, 162, 162, 163, 164, 165, 166, 167, 168,
-	169, 169, 170, 171, 172, 173, 174, 175, 176, 176, 177, 178, 179, 180, 181, 181,
-	182, 183, 184, 185, 186, 186, 187, 188, 189, 190, 191, 191, 192, 193, 194, 195,
-	195, 196, 197, 198, 199, 199, 200, 201, 202, 202, 203, 204, 205, 205, 206, 207,
-	208, 208, 209, 210, 210, 211, 212, 213, 213, 214, 215, 215, 216, 217, 217, 218,
-	219, 219, 220, 221, 221, 222, 223, 223, 224, 224, 225, 226, 226, 227, 227, 228,
-	229, 229, 230, 230, 231, 231, 232, 233, 233, 234, 234, 235, 235, 236, 236, 237,
-	237, 238, 238, 239, 239, 239, 240, 240, 241, 241, 242, 242, 242, 243, 243, 244,
-	244, 244, 245, 245, 246, 246, 246, 247, 247, 247, 248, 248, 248, 249, 249, 249,
-	249, 250, 250, 250, 250, 251, 251, 251, 251, 252, 252, 252, 252, 252, 253, 253,
-	253, 253, 253, 253, 254, 254, 254, 254, 254, 254, 254, 254, 254, 255, 255, 255,
-	255, 255, 255, 255, 255, 255, 255, 255,
+static struct system_state_t system_state = {
+	.speed = 3,
+	.length = 3,
+	.interpolation_mode = INTERPOLATION_SINUSOIDAL,
 };
-#define SINETABLE_SIZE		(sizeof(sine_table) / sizeof(uint8_t))
+static struct motor_actuation_state_t motor_actuation_state;
+
+static char displaybuffer[2 * 16];
+static const char char_heart[8] PROGMEM = { 0x0, 0xa, 0x1f, 0x1f, 0x1f, 0xe, 0x4, 0x0 };
+static const char char_lin_l[8] PROGMEM = { 0x0, 0x8, 0x14, 0x2, 0x1, 0x0, 0x0, 0x0 };
+static const char char_lin_r[8] PROGMEM = { 0x0, 0x0, 0x0, 0x0, 0x1, 0x2, 0x14, 0x8 };
+static const char char_sine_l[8] PROGMEM = { 0x0, 0xc, 0x12, 0x1, 0x1, 0x0, 0x0, 0x0 };
+static const char char_sine_r[8] PROGMEM = { 0x0, 0x0, 0x0, 0x1, 0x1, 0x2, 0x1c, 0x0 };
+
+#define LOOKUP_TABLE_SIZE				200
+#define ABSOLUTE_MINIMUM_SPEED_PERIOD	4906
+#define ABSOLUTE_MAXIMUM_SPEED_PERIOD	140
+static const uint16_t sine_table[LOOKUP_TABLE_SIZE] PROGMEM = {
+	 4906,  3686,  2954,  2466,  2118,  1856,  1653,  1491,  1358,  1247,  1153,  1073,  1003,   943,   889,   841,
+	  799,   760,   725,   694,   665,   639,   614,   592,   571,   552,   534,   518,   502,   487,   474,   461,
+	  449,   437,   426,   416,   406,   397,   388,   380,   372,   364,   357,   350,   344,   337,   331,   326,
+	  320,   315,   309,   304,   300,   295,   291,   286,   282,   278,   274,   271,   267,   264,   260,   257,
+	  254,   251,   248,   245,   242,   240,   237,   234,   232,   230,   227,   225,   223,   221,   219,   217,
+	  215,   213,   211,   209,   207,   205,   204,   202,   200,   199,   197,   196,   194,   193,   192,   190,
+	  189,   188,   186,   185,   184,   183,   182,   180,   179,   178,   177,   176,   175,   174,   173,   172,
+	  171,   171,   170,   169,   168,   167,   166,   166,   165,   164,   163,   163,   162,   161,   161,   160,
+	  159,   159,   158,   157,   157,   156,   156,   155,   155,   154,   154,   153,   153,   152,   152,   151,
+	  151,   150,   150,   149,   149,   149,   148,   148,   148,   147,   147,   147,   146,   146,   146,   145,
+	  145,   145,   144,   144,   144,   144,   143,   143,   143,   143,   143,   142,   142,   142,   142,   142,
+	  142,   141,   141,   141,   141,   141,   141,   141,   141,   141,   140,   140,   140,   140,   140,   140,
+	  140,   140,   140,   140,   140,   140,   140,   140,
+};
+
+static const uint16_t lin_table[LOOKUP_TABLE_SIZE] PROGMEM = {
+	254, 254, 253, 253, 252, 252, 251, 250, 250, 249, 249, 248, 248, 247, 246, 246,
+	245, 245, 244, 244, 243, 242, 242, 241, 241, 240, 239, 239, 238, 238, 237, 237,
+	236, 235, 235, 234, 234, 233, 233, 232, 231, 231, 230, 230, 229, 229, 228, 227,
+	227, 226, 226, 225, 225, 224, 223, 223, 222, 222, 221, 220, 220, 219, 219, 218,
+	218, 217, 216, 216, 215, 215, 214, 214, 213, 212, 212, 211, 211, 210, 210, 209,
+	208, 208, 207, 207, 206, 206, 205, 204, 204, 203, 203, 202, 202, 201, 200, 200,
+	199, 199, 198, 198, 197, 196, 196, 195, 195, 194, 193, 193, 192, 192, 191, 191,
+	190, 189, 189, 188, 188, 187, 187, 186, 185, 185, 184, 184, 183, 183, 182, 181,
+	181, 180, 180, 179, 179, 178, 177, 177, 176, 176, 175, 174, 174, 173, 173, 172,
+	172, 171, 170, 170, 169, 169, 168, 168, 167, 166, 166, 165, 165, 164, 164, 163,
+	162, 162, 161, 161, 160, 160, 159, 158, 158, 157, 157, 156, 156, 155, 154, 154,
+	153, 153, 152, 152, 151, 150, 150, 149, 149, 148, 147, 147, 146, 146, 145, 145,
+	144, 143, 143, 142, 142, 141, 141, 140,
+};
+
+static const uint16_t maximum_speed_table[] PROGMEM = {
+	[1] = 300,
+	[2] = 260,
+	[3] = 220,
+	[4] = 200,
+	[5] = 190,
+	[6] = 170,
+	[7] = 160,
+	[8] = 150,
+	[9] = ABSOLUTE_MAXIMUM_SPEED_PERIOD,
+};
+
+
+static void pwm_enable(void) {
+	/* Put OC1B in PWM mode */
+	/* TCCR1A : COM1B1 COM1B0 WGM11 WGM10                   */
+	/* TCCR1B : WGM13 WGM12                  CS12 CS11 CS10 */
+	TCNT1 = 0;
+	ICR1 = 1000;
+	OCR1B = 1001;
+	TCCR1A = _BV(COM1B1) | _BV(WGM11);
+	TCCR1B = _BV(CS11) | _BV(WGM13) | _BV(WGM12);	/* CK / 8 */
+}
+
+static void pwm_set_period(uint16_t period) {
+	TCNT1 = 0;
+	ICR1 = period;
+	OCR1B = period / 2;
+}
+
+static void pwm_disable(void) {
+	TCCR1A = 0;
+}
+
+
+static void refresh_display(void) {
+	hd44780_print_charcnt(0, 0, displaybuffer + (16 * 0), 16);
+	hd44780_print_charcnt(0, 1, displaybuffer + (16 * 1), 16);
+}
+
+static void strcpy_P_noterm(char *dest, const char *string) {
+	char character;
+	while ((character = pgm_read_byte(string++)) != 0) {
+		*dest = character;
+		dest++;
+	}
+}
+
+static void strcpy_noterm(char *dest, const char *string) {
+	char character;
+	while ((character = *string++) != 0) {
+		*dest = character;
+		dest++;
+	}
+}
+
+static void itoa(char *string, int16_t value) {
+	bool first = true;
+
+	char *pos = string;
+	while ((value > 0) || first) {
+		uint8_t digit = value % 10;
+		*pos = digit + '0';
+		pos++;
+		value /= 10;
+		first = false;
+	}
+	*pos = 0;
+
+	strrev(string);
+}
+
+static void state_to_display(void) {
+	memset(displaybuffer, ' ', 32);
+	if (system_state.active) {
+		strcpy_P_noterm(displaybuffer + 0, PSTR("On"));
+	} else {
+		strcpy_P_noterm(displaybuffer + 0, PSTR("Off"));
+	}
+
+	if (system_state.interpolation_mode == INTERPOLATION_LINEAR) {
+		strcpy_P_noterm(displaybuffer + 5, PSTR("\x01\x02\x01"));
+	} else {
+		strcpy_P_noterm(displaybuffer + 5, PSTR("\x03\x04\x03"));
+	}
+
+	strcpy_P_noterm(displaybuffer + 10, PSTR("Tmr"));
+	if (system_state.timer_seconds > 0) {
+		char minutes[8];
+		itoa(minutes, (system_state.timer_seconds + 59) / 60);
+		strcpy_noterm(displaybuffer + 14, minutes);
+	} else {
+		strcpy_noterm(displaybuffer + 14, "-");
+	}
+
+	strcpy_P_noterm(displaybuffer + 16 + 1, PSTR("Spd"));
+	displaybuffer[16 + 5] = system_state.speed + '0';
+
+	strcpy_P_noterm(displaybuffer + 16 + 10, PSTR("Len"));
+	displaybuffer[16 + 14] = system_state.length + '0';
+
+	if (system_state.menu_active == ACTIVE_MENU_WAVEFORM) {
+		displaybuffer[4] = '~';
+	} else if (system_state.menu_active == ACTIVE_MENU_TIMER) {
+		displaybuffer[9] = '~';
+	} else if (system_state.menu_active == ACTIVE_MENU_SPEED) {
+		displaybuffer[16 + 0] = '~';
+	} else if (system_state.menu_active == ACTIVE_MENU_LENGTH) {
+		displaybuffer[16 + 9] = '~';
+	}
+
+#if 0
+	{
+		char temp[8];
+		itoa(temp, motor_actuation_state.distance_travelled);
+		memset(displaybuffer, ' ', 32);
+		strcpy_noterm(displaybuffer + 0, temp);
+	}
+#endif
+}
 
 static void set_stepping(uint8_t step) {
 	MS1_SetInactive();
@@ -104,50 +266,103 @@ static void set_stepping(uint8_t step) {
 		stepping = 0;
 	}
 }
-#if 0
-static void sleep_units(uint16_t units) {
-	while (units--) {
-		__asm__ __volatile__("");
-	}
-}
 
-static void steps(uint16_t stepcount, uint16_t start_delay, uint16_t end_delay) {
-	/* Number of steps needs to be larger when we microstep */
-	uint16_t steps = stepcount << stepping;
-	uint16_t midpoint = steps / 2;
-	uint16_t delay = start_delay;
-
-	uint16_t delay_diff = start_delay - end_delay;
-	uint16_t full_slope = delay_diff / midpoint;
-	uint16_t residual_slope = delay_diff % midpoint;
-	uint16_t accumulator = 0;
-
-	while (steps--) {
-		STEP_SetActive();
-		sleep_units(delay);
-		STEP_SetInactive();
-		sleep_units(delay);
-
-		int8_t scalar;
-		if (steps > midpoint) {
-			/* Still accelerating, decrease delay */
-			scalar = -1;
-		} else {
-			/* Now decelerating, increase delay */
-			scalar = 1;
-		}
-
-		delay += scalar * full_slope;
-		accumulator += residual_slope;
-		if (accumulator >= midpoint) {
-			delay += scalar;
-			accumulator -= midpoint;
+static void check_buttons(void) {
+	if (buttons_pressed & BUTTON_MIDDLE) {
+		system_state.active = !system_state.active;
+		if (system_state.active) {
+			pwm_enable();
+			ENABLE_SetActive();
 		}
 	}
+	if (buttons_pressed & BUTTON_LEFT) {
+		system_state.menu_active -= 1;
+		if (system_state.menu_active == 255) {
+			system_state.menu_active = ACTIVE_MENU_LAST - 1;
+		}
+	}
+	if (buttons_pressed & BUTTON_RIGHT) {
+		system_state.menu_active += 1;
+		if (system_state.menu_active == ACTIVE_MENU_LAST) {
+			system_state.menu_active = 0;
+		}
+	}
+
+	if (buttons_pressed & BUTTON_UP) {
+		if (system_state.menu_active == ACTIVE_MENU_WAVEFORM) {
+			system_state.interpolation_mode = (system_state.interpolation_mode == INTERPOLATION_LINEAR) ? INTERPOLATION_SINUSOIDAL : INTERPOLATION_LINEAR;
+		}
+		if (system_state.menu_active == ACTIVE_MENU_TIMER) {
+			if (system_state.timer_seconds < 3600) {
+				system_state.timer_seconds += 120;
+			}
+		}
+		if (system_state.menu_active == ACTIVE_MENU_SPEED) {
+			if (system_state.speed < 9) {
+				system_state.speed += 1;
+			}
+		}
+		if (system_state.menu_active == ACTIVE_MENU_LENGTH) {
+			if (system_state.length < 9) {
+				system_state.length += 1;
+			}
+		}
+	}
+
+	if (buttons_pressed & BUTTON_DOWN) {
+		if (system_state.menu_active == ACTIVE_MENU_WAVEFORM) {
+			system_state.interpolation_mode = (system_state.interpolation_mode == INTERPOLATION_LINEAR) ? INTERPOLATION_SINUSOIDAL : INTERPOLATION_LINEAR;
+		}
+		if (system_state.menu_active == ACTIVE_MENU_TIMER) {
+			if (system_state.timer_seconds >= 120) {
+				system_state.timer_seconds -= 120;
+			} else {
+				system_state.timer_seconds = 0;
+			}
+		}
+		if (system_state.menu_active == ACTIVE_MENU_SPEED) {
+			if (system_state.speed > 1) {
+				system_state.speed -= 1;
+			}
+		}
+		if (system_state.menu_active == ACTIVE_MENU_LENGTH) {
+			if (system_state.length > 1) {
+				system_state.length -= 1;
+			}
+		}
+	}
+
+	buttons_pressed = 0;
 }
-#endif
 
 static void second_passed(void) {
+	if (system_state.timer_seconds) {
+		system_state.timer_seconds--;
+		if (system_state.timer_seconds == 0) {
+			/* Shutoff. */
+			system_state.active = false;
+		} else if (system_state.timer_seconds <= 2 * 60) {
+			/* Last 2 minutes */
+			if (system_state.speed > 1) {
+				system_state.speed--;
+			}
+		} else if (system_state.timer_seconds <= 4 * 60) {
+			/* Last 4 minutes */
+			if (system_state.speed > 2) {
+				system_state.speed--;
+			}
+		} else if (system_state.timer_seconds <= 6 * 60) {
+			/* Last 6 minutes */
+			if (system_state.speed > 3) {
+				system_state.speed--;
+			}
+		} else if (system_state.timer_seconds > 8) {
+			/* Last 8 minutes */
+			if (system_state.speed > 4) {
+				system_state.speed--;
+			}
+		}
+	}
 }
 
 ISR(TIMER0_OVF_vect) {
@@ -160,6 +375,12 @@ ISR(TIMER0_OVF_vect) {
 	if (debounce(&button_state.right, SWITCH_RIGHT_IsActive()) == ACTION_PRESSED) {
 		buttons_pressed |= BUTTON_RIGHT;
 	}
+	if (debounce(&button_state.up, SWITCH_UP_IsActive()) == ACTION_PRESSED) {
+		buttons_pressed |= BUTTON_UP;
+	}
+	if (debounce(&button_state.down, SWITCH_DOWN_IsActive()) == ACTION_PRESSED) {
+		buttons_pressed |= BUTTON_DOWN;
+	}
 
 	static uint8_t second_tick = 250;
 	second_tick--;
@@ -168,71 +389,74 @@ ISR(TIMER0_OVF_vect) {
 		second_passed();
 	}
 }
-#if 0
-static void itoa(char *string, int16_t value) {
-	bool first = true;
 
-	char *pos = string;
-	while ((value > 0) || first) {
-		uint8_t digit = value % 10;
-		*pos = digit + '0';
-		pos++;
-		value /= 10;
-		first = false;
-	}
-	*pos = 0;
-
-	strrev(string);
+static void motor_switch_direction(void) {
+	motor_actuation_state.distance_travelled = 0;
+	DIRECTION_Toggle();
 }
-#endif
 
-#if 0
-static void update_timer_display(int16_t time_secs) {
-	if (time_secs <= 0) {
-		hd44780_print_P(0, 1, PSTR("Timer: off      "));
+/* Called approximately every millisecond */
+static void actuate_motor(void) {
+	/* Distance travelled is the integral of speed over time */
+	motor_actuation_state.distance_travelled += motor_actuation_state.current_speed;
+
+	if (!motor_actuation_state.falling) {
+		/* Rising edge, increase table index */
+		if (motor_actuation_state.lookup_index < LOOKUP_TABLE_SIZE - 1) {
+			motor_actuation_state.lookup_index++;
+		}
 	} else {
-		hd44780_print_P(0, 1, PSTR("Timer: "));
-
-		char string[16];
-		int16_t minutes = (time_secs + 30) / 60;
-		itoa(string, minutes);
-		hd44780_print_cursor(string);
-		hd44780_print_P_cursor(PSTR(" min   "));
-	}
-}
-
-static void steps_sine(bool invert, uint16_t step_count, uint8_t repetitions) {
-	uint16_t steps = step_count;
-	while (steps--) {
-		uint8_t index = (uint32_t)LOOKUP_TABLE_SIZE * steps / step_count;
-		if (invert) {
-			index = LOOKUP_TABLE_SIZE - 1 - index;
-		}
-		uint16_t delay = 8 * lookup_value(index);
-
-		for (uint8_t i = 0; i < repetitions; i++) {
-			STEP_SetActive();
-			sleep_units(delay);
-			STEP_SetInactive();
-			sleep_units(delay);
+		/* Falling edge, decrease table index */
+		if (motor_actuation_state.lookup_index) {
+			motor_actuation_state.lookup_index--;
+		} else {
+			/* We're at speed zero, switch direction */
+			motor_switch_direction();
+			motor_actuation_state.falling = false;
 		}
 	}
+
+	/* Choose the proper lookup table */
+	const uint16_t *table = (system_state.interpolation_mode == INTERPOLATION_SINUSOIDAL) ? sine_table : lin_table;
+
+	/* Read the period word from the table */
+	uint16_t period = pgm_read_word(table + motor_actuation_state.lookup_index);
+
+	/* Limit the value of the period word depending on the maximum speed */
+	if ((system_state.speed >= 1) && (system_state.speed <= 9)) {
+		uint16_t maximum_speed_period = pgm_read_word(maximum_speed_table + system_state.speed);
+		if (period < maximum_speed_period) {
+			period = maximum_speed_period;
+		}
+	}
+
+	/* Never allow faster than this, however */
+	if (period < ABSOLUTE_MAXIMUM_SPEED_PERIOD) {
+		period = ABSOLUTE_MAXIMUM_SPEED_PERIOD;
+	}
+	/* Or slower than this */
+	if (period > ABSOLUTE_MINIMUM_SPEED_PERIOD) {
+		period = ABSOLUTE_MINIMUM_SPEED_PERIOD;
+	}
+
+	/* From that period, calculate the new motor speed */
+	motor_actuation_state.current_speed = ABSOLUTE_MINIMUM_SPEED_PERIOD / period;
+
+	/* Once we've fulfilled the required distance, we start initiating the backoff */
+	uint16_t required_distance = 8000 + (system_state.length * 1000);
+
+	if (motor_actuation_state.distance_travelled > required_distance) {
+		if (!motor_actuation_state.falling) {
+			/* Slow down motor, but still keep direction */
+			/* We're currently full speed ahead, cannot reverse now */
+			motor_actuation_state.falling = true;
+		}
+	}
+
+	/* Finally set the appropriate PWM */
+	pwm_set_period(period);
 }
-#endif
 
-
-static char displaybuffer[2 * 16];
-
-static const char char_heart[8] PROGMEM = { 0x0, 0xa, 0x1f, 0x1f, 0x1f, 0xe, 0x4, 0x0 };
-static const char char_lin_l[8] PROGMEM = { 0x0, 0x8, 0x14, 0x2, 0x1, 0x0, 0x0, 0x0 };
-static const char char_lin_r[8] PROGMEM = { 0x0, 0x0, 0x0, 0x0, 0x1, 0x2, 0x14, 0x8 };
-static const char char_sine_l[8] PROGMEM = { 0x0, 0xc, 0x12, 0x1, 0x1, 0x0, 0x0, 0x0 };
-static const char char_sine_r[8] PROGMEM = { 0x0, 0x0, 0x0, 0x1, 0x1, 0x2, 0x1c, 0x0 };
-
-static void refresh_display(void) {
-	hd44780_print_charcnt(0, 0, displaybuffer + (16 * 0), 16);
-	hd44780_print_charcnt(0, 1, displaybuffer + (16 * 1), 16);
-}
 
 int main(void) {
 	initHAL();
@@ -266,102 +490,24 @@ int main(void) {
 	ENABLE_SetInactive();
 	set_stepping(16);
 
-	/* Put OC1B in fast PWM mode (Mode14) */
-	/* TCCR1A : COM1B1 COM1B0 WGM11 WGM10 */
-	/* TCCR1B : WGM13 WGM12               CS12 CS11 CS10 */
-	TCCR1A = _BV(COM1B1) | _BV(WGM11);
-	TCCR1B = _BV(CS11) | _BV(WGM13) | _BV(WGM12);	/* CTC mode, CK / 8 */
+
 
 	/* f = 16e6 / 8 / ICR1 */
 	/* Absolute maximum frequency for stepper driver: ~15.4 kHz in 16-step
 	 * microstepping mode (ICR1 = 130) */
-	ENABLE_SetActive();
-	ICR1 = 500;
-	OCR1B = ICR1 / 2;
 
-	int16_t index = 0;
-	int16_t count = 1;
 	while (true) {
-		uint16_t period = pgm_read_byte(sine_table + index);
-		TCNT1 = 0;
-		ICR1 = period;
-		OCR1B = period / 2;
-		index = index + count;
-		if (index < 0) {
-			index = 1;
-			count = -count;
-		} else if (index >= SINETABLE_SIZE) {
-			index = SINETABLE_SIZE - 2;
-			count = -count;
+		if (!system_state.active) {
+			ENABLE_SetInactive();
+			STEP_SetInactive();
+			pwm_disable();
+		} else {
+			actuate_motor();
 		}
 
-		_delay_ms(1);
-		displaybuffer[0]++;
+		check_buttons();
+		state_to_display();
 		refresh_display();
 	}
-
-#if 0
-	update_status(run_mode);
-	update_timer_display(timer_mode);
-	while (true) {
-		if (run_mode == MODE_SINE) {
-			ENABLE_SetActive();
-			/* Pull back */
-			DIRECTION_SetInactive();
-			steps_sine(false, 270, 30);
-
-			/* Then release */
-			DIRECTION_SetActive();
-			steps_sine(true, 270, 30);
-		} else if (run_mode == MODE_FAST) {
-			ENABLE_SetActive();
-			/* Pull back */
-			DIRECTION_SetInactive();
-			steps(700, 200, 100);
-
-			/* Then release */
-			DIRECTION_SetActive();
-			steps(700, 200, 100);
-		} else if (run_mode == MODE_SLOWING) {
-			if (timer_mode > 0) {
-				uint16_t speed = (timer_mode > 800) ? 0 : (800 - timer_mode) / 4;
-				ENABLE_SetActive();
-
-				/* Pull back */
-				DIRECTION_SetInactive();
-				steps(500, 200 + speed, 100 + speed);
-
-				/* Then release */
-				DIRECTION_SetActive();
-				steps(500, 200 + speed, 100 + speed);
-			} else {
-				ENABLE_SetInactive();
-			}
-		} else if (run_mode == MODE_OFF) {
-			ENABLE_SetInactive();
-		}
-
-		if (buttons_pressed & BUTTON_MIDDLE) {
-			run_mode++;
-			if (run_mode == MODE_INVALID) {
-				run_mode = MODE_OFF;
-			}
-			update_display = true;
-		}
-		if (buttons_pressed & BUTTON_RIGHT) {
-			if (timer_mode <= 0) {
-				timer_mode = 0;
-			}
-			timer_mode += 10 * 60;
-			update_display = true;
-		}
-		buttons_pressed = 0;
-		if (update_display) {
-			update_display = false;
-			update_status(run_mode);
-			update_timer_display(timer_mode);
-		}
-	}
-#endif
 	return 0;
 }

@@ -6,15 +6,21 @@ import math
 
 values = [ ]
 for i in range(200):
-	x = i / 200 * math.pi / 2
-	y = round(140 + 115 * math.sin(x))
+	x = (i + 3) / 200 * math.pi / 2
+	y = round(25 + 115 * (1 / math.sin(x)))
+#	y = round(140 + 115 * (i / 200))
 	values.append(y)
 
-print("static const uint8_t sine_table[] PROGMEM = {")
+print("static const uint16_t sine_table[] PROGMEM = {")
 perline = 16
 for i in range(0, len(values), perline):
 	chunk = values[i : i + 16]
-	print("	%s" % (" ".join("%3d," % (v) for v in chunk)))
+	print("	%s" % (" ".join("%5d," % (v) for v in chunk)))
 print("};")
 
 #	print("%.0f," % ()
+
+for value in values:
+	freq = 16e6 / 8 / value
+	speed = round(freq / 408 * 2)
+	print("%3d: %7.0f Hz Spd %d" % (value, freq, speed))

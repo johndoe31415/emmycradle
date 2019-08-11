@@ -1,7 +1,7 @@
 /* Automatically generated HAL from hal.xml */
 /* NEVER EDIT MANUALLY */
 
-/* Generated on: 2019-08-10 18:19:54 */
+/* Generated on: 2019-08-10 23:19:45 */
 
 #ifndef __HAL_H__
 #define __HAL_H__
@@ -193,20 +193,20 @@
 #define SWITCH_UP_IsActive()                     (SWITCH_UP_Get() == 0)
 #define SWITCH_UP_Init()                         { SWITCH_UP_SetPullupActive(); SWITCH_UP_ModeInput(); }
 
-/* SWITCH_DOWN -> PA1 (Input, Initially Pullup On, Active-Low) */
-#define SWITCH_DOWN_BIT                          1
-#define SWITCH_DOWN_PIN                          PINA
-#define SWITCH_DOWN_PORT                         PORTA
-#define SWITCH_DOWN_DDR                          DDRA
-#define SWITCH_DOWN_SetPullupActive()            SWITCH_DOWN_PORT |= _BV(SWITCH_DOWN_BIT)
-#define SWITCH_DOWN_SetPullupInactive()          SWITCH_DOWN_PORT &= ~_BV(SWITCH_DOWN_BIT)
-#define SWITCH_DOWN_ModeInput()                  SWITCH_DOWN_DDR &= ~_BV(SWITCH_DOWN_BIT)
-#define SWITCH_DOWN_IsInput()                    ((SWITCH_DOWN_DDR & _BV(SWITCH_DOWN_BIT)) == 0)
-#define SWITCH_DOWN_Get()                        (SWITCH_DOWN_PIN & _BV(SWITCH_DOWN_BIT))
-#define SWITCH_DOWN_GetBit()                     (SWITCH_DOWN_Get() >> SWITCH_DOWN_BIT)
-#define SWITCH_DOWN_IsInactive()                 (SWITCH_DOWN_Get() != 0)
-#define SWITCH_DOWN_IsActive()                   (SWITCH_DOWN_Get() == 0)
-#define SWITCH_DOWN_Init()                       { SWITCH_DOWN_SetPullupActive(); SWITCH_DOWN_ModeInput(); }
+/* SWITCH_LEFT -> PA1 (Input, Initially Pullup On, Active-Low) */
+#define SWITCH_LEFT_BIT                          1
+#define SWITCH_LEFT_PIN                          PINA
+#define SWITCH_LEFT_PORT                         PORTA
+#define SWITCH_LEFT_DDR                          DDRA
+#define SWITCH_LEFT_SetPullupActive()            SWITCH_LEFT_PORT |= _BV(SWITCH_LEFT_BIT)
+#define SWITCH_LEFT_SetPullupInactive()          SWITCH_LEFT_PORT &= ~_BV(SWITCH_LEFT_BIT)
+#define SWITCH_LEFT_ModeInput()                  SWITCH_LEFT_DDR &= ~_BV(SWITCH_LEFT_BIT)
+#define SWITCH_LEFT_IsInput()                    ((SWITCH_LEFT_DDR & _BV(SWITCH_LEFT_BIT)) == 0)
+#define SWITCH_LEFT_Get()                        (SWITCH_LEFT_PIN & _BV(SWITCH_LEFT_BIT))
+#define SWITCH_LEFT_GetBit()                     (SWITCH_LEFT_Get() >> SWITCH_LEFT_BIT)
+#define SWITCH_LEFT_IsInactive()                 (SWITCH_LEFT_Get() != 0)
+#define SWITCH_LEFT_IsActive()                   (SWITCH_LEFT_Get() == 0)
+#define SWITCH_LEFT_Init()                       { SWITCH_LEFT_SetPullupActive(); SWITCH_LEFT_ModeInput(); }
 
 /* SWITCH_MIDDLE -> PA2 (Input, Initially Pullup On, Active-Low) */
 #define SWITCH_MIDDLE_BIT                        2
@@ -223,23 +223,8 @@
 #define SWITCH_MIDDLE_IsActive()                 (SWITCH_MIDDLE_Get() == 0)
 #define SWITCH_MIDDLE_Init()                     { SWITCH_MIDDLE_SetPullupActive(); SWITCH_MIDDLE_ModeInput(); }
 
-/* SWITCH_LEFT -> PA3 (Input, Initially Pullup On, Active-Low) */
-#define SWITCH_LEFT_BIT                          3
-#define SWITCH_LEFT_PIN                          PINA
-#define SWITCH_LEFT_PORT                         PORTA
-#define SWITCH_LEFT_DDR                          DDRA
-#define SWITCH_LEFT_SetPullupActive()            SWITCH_LEFT_PORT |= _BV(SWITCH_LEFT_BIT)
-#define SWITCH_LEFT_SetPullupInactive()          SWITCH_LEFT_PORT &= ~_BV(SWITCH_LEFT_BIT)
-#define SWITCH_LEFT_ModeInput()                  SWITCH_LEFT_DDR &= ~_BV(SWITCH_LEFT_BIT)
-#define SWITCH_LEFT_IsInput()                    ((SWITCH_LEFT_DDR & _BV(SWITCH_LEFT_BIT)) == 0)
-#define SWITCH_LEFT_Get()                        (SWITCH_LEFT_PIN & _BV(SWITCH_LEFT_BIT))
-#define SWITCH_LEFT_GetBit()                     (SWITCH_LEFT_Get() >> SWITCH_LEFT_BIT)
-#define SWITCH_LEFT_IsInactive()                 (SWITCH_LEFT_Get() != 0)
-#define SWITCH_LEFT_IsActive()                   (SWITCH_LEFT_Get() == 0)
-#define SWITCH_LEFT_Init()                       { SWITCH_LEFT_SetPullupActive(); SWITCH_LEFT_ModeInput(); }
-
-/* SWITCH_RIGHT -> PA4 (Input, Initially Pullup On, Active-Low) */
-#define SWITCH_RIGHT_BIT                         4
+/* SWITCH_RIGHT -> PA3 (Input, Initially Pullup On, Active-Low) */
+#define SWITCH_RIGHT_BIT                         3
 #define SWITCH_RIGHT_PIN                         PINA
 #define SWITCH_RIGHT_PORT                        PORTA
 #define SWITCH_RIGHT_DDR                         DDRA
@@ -252,6 +237,21 @@
 #define SWITCH_RIGHT_IsInactive()                (SWITCH_RIGHT_Get() != 0)
 #define SWITCH_RIGHT_IsActive()                  (SWITCH_RIGHT_Get() == 0)
 #define SWITCH_RIGHT_Init()                      { SWITCH_RIGHT_SetPullupActive(); SWITCH_RIGHT_ModeInput(); }
+
+/* SWITCH_DOWN -> PA4 (Input, Initially Pullup On, Active-Low) */
+#define SWITCH_DOWN_BIT                          4
+#define SWITCH_DOWN_PIN                          PINA
+#define SWITCH_DOWN_PORT                         PORTA
+#define SWITCH_DOWN_DDR                          DDRA
+#define SWITCH_DOWN_SetPullupActive()            SWITCH_DOWN_PORT |= _BV(SWITCH_DOWN_BIT)
+#define SWITCH_DOWN_SetPullupInactive()          SWITCH_DOWN_PORT &= ~_BV(SWITCH_DOWN_BIT)
+#define SWITCH_DOWN_ModeInput()                  SWITCH_DOWN_DDR &= ~_BV(SWITCH_DOWN_BIT)
+#define SWITCH_DOWN_IsInput()                    ((SWITCH_DOWN_DDR & _BV(SWITCH_DOWN_BIT)) == 0)
+#define SWITCH_DOWN_Get()                        (SWITCH_DOWN_PIN & _BV(SWITCH_DOWN_BIT))
+#define SWITCH_DOWN_GetBit()                     (SWITCH_DOWN_Get() >> SWITCH_DOWN_BIT)
+#define SWITCH_DOWN_IsInactive()                 (SWITCH_DOWN_Get() != 0)
+#define SWITCH_DOWN_IsActive()                   (SWITCH_DOWN_Get() == 0)
+#define SWITCH_DOWN_Init()                       { SWITCH_DOWN_SetPullupActive(); SWITCH_DOWN_ModeInput(); }
 
 /* RELAY -> PA6 (Output, Initially Inactive) */
 #define RELAY_BIT                                6
@@ -455,10 +455,10 @@
 		MS1_Init();\
 		ENABLE_Init();\
 		SWITCH_UP_Init();\
-		SWITCH_DOWN_Init();\
-		SWITCH_MIDDLE_Init();\
 		SWITCH_LEFT_Init();\
+		SWITCH_MIDDLE_Init();\
 		SWITCH_RIGHT_Init();\
+		SWITCH_DOWN_Init();\
 		RELAY_Init();\
 		DISPLAY_RS_Init();\
 		DISPLAY_READ_Init();\
