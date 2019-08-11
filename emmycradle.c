@@ -445,7 +445,7 @@ static void actuate_motor(void) {
 	motor_actuation_state.current_speed = ABSOLUTE_MINIMUM_SPEED_PERIOD / period;
 
 	/* Once we've fulfilled the required distance, we start initiating the backoff */
-	uint16_t required_distance = 8000 + (system_state.length * 1000);
+	uint16_t required_distance = 2000 + (system_state.length * 1000);
 
 	if (motor_actuation_state.distance_travelled > required_distance) {
 		if (!motor_actuation_state.falling) {
